@@ -142,37 +142,35 @@ async def login(body: LoginRequest) -> LoginResponse:
 @router.post("/register", status_code=201)
 async def register(body: RegisterRequest) -> dict:
     """Register a new user account (role='user')."""
-    from sqlalchemy import func
 
     # Check username already taken
     async with get_session_sync()() as session:
-        result = await session.execute(
-            select(User).where(User.username == body.username)
-        )
-        if result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={
-                    "error": {
-                        "message": "用户名已被注册",
-                        "type": "conflict",
-                    }
-                },
+        async with session.begin():
+            result = await session.execute(
+                select(User).where(User.username == body.username)
             )
+            if result.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail={
+                        "error": {
+                            "message": "用户名已被注册",
+                            "type": "conflict",
+                        }
+                    },
+                )
 
-        # Create user
-        pw_hash = ph.hash(body.password)
-        user = User(
-            username=body.username,
-            password_hash=pw_hash,
-            email=body.email or "",
-            role="user",
-            balance=0,
-            status=1,
-        )
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
+            # Create user
+            pw_hash = ph.hash(body.password)
+            user = User(
+                username=body.username,
+                password_hash=pw_hash,
+                email=body.email or "",
+                role="user",
+                balance=0,
+                status=1,
+            )
+            session.add(user)
 
     return {
         "id": user.id,
