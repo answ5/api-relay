@@ -21,8 +21,27 @@ import UserKeys from './pages/user/Keys';
 import UserLogs from './pages/user/Logs';
 import UserBills from './pages/user/Bills';
 
+function ProtectedRoute({ auth, children }) {
+  if (!auth) return <Navigate to="/login" replace />;
+  return children;
+}
+
+function AdminRoute({ auth, children }) {
+  const isAdmin = auth?.role === 'admin' || auth?.role === 'super_admin';
+  if (!auth) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return children;
+}
+
+function UserRoute({ auth, children }) {
+  const isAdmin = auth?.role === 'admin' || auth?.role === 'super_admin';
+  if (!auth) return <Navigate to="/login" replace />;
+  if (isAdmin) return <Navigate to="/" replace />;
+  return children;
+}
+
 export default function App() {
-  const [auth, setAuth] = useState(null); // { id, username, role } | null
+  const [auth, setAuth] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,41 +53,53 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading">加载中...</div>;
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: '100vh', color: '#999', fontSize: '1rem',
+      }}>
+        加载中...
+      </div>
+    );
+  }
+
   const isAdmin = auth?.role === 'admin' || auth?.role === 'super_admin';
 
   return (
     <HashRouter>
       <Routes>
         {/* Public routes */}
-        <Route path="/login" element={auth ? <Navigate to="/" /> : <Login onLogin={setAuth} />} />
-        <Route path="/register" element={auth ? <Navigate to="/" /> : <Register />} />
+        <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={setAuth} />} />
+        <Route path="/register" element={auth ? <Navigate to="/" replace /> : <Register />} />
 
-        {/* Admin routes */}
-        {isAdmin && (
-          <Route path="/" element={<AdminLayout auth={auth} onLogout={() => { localStorage.removeItem('token'); setAuth(null); }} />}>
-            <Route index element={<Dashboard />} />
-            <Route path="users" element={<Users />} />
-            <Route path="tokens" element={<Tokens />} />
-            <Route path="channels" element={<Channels />} />
-            <Route path="models" element={<ModelPricing />} />
-            <Route path="logs" element={<Logs />} />
-            <Route path="transactions" element={<Transactions />} />
-          </Route>
-        )}
+        {/* Admin layout + routes */}
+        <Route path="/" element={
+          <ProtectedRoute auth={auth}>
+            {isAdmin
+              ? <AdminLayout auth={auth} onLogout={() => { localStorage.removeItem('token'); setAuth(null); }} />
+              : <UserLayout auth={auth} onLogout={() => { localStorage.removeItem('token'); setAuth(null); }} />
+            }
+          </ProtectedRoute>
+        }>
+          {/* Admin-only pages */}
+          <Route index element={isAdmin ? <Dashboard /> : <UserDashboard />} />
+          <Route path="users" element={<AdminRoute auth={auth}><Users /></AdminRoute>} />
+          <Route path="tokens" element={<AdminRoute auth={auth}><Tokens /></AdminRoute>} />
+          <Route path="channels" element={<AdminRoute auth={auth}><Channels /></AdminRoute>} />
+          <Route path="models" element={<AdminRoute auth={auth}><ModelPricing /></AdminRoute>} />
+          <Route path="transactions" element={<AdminRoute auth={auth}><Transactions /></AdminRoute>} />
+          {/* Shared pages */}
+          <Route path="logs" element={
+            isAdmin ? <Logs /> : <UserLogs />
+          } />
+          {/* User-only pages */}
+          <Route path="keys" element={<UserRoute auth={auth}><UserKeys /></UserRoute>} />
+          <Route path="bills" element={<UserRoute auth={auth}><UserBills /></UserRoute>} />
+        </Route>
 
-        {/* User routes */}
-        {!isAdmin && auth && (
-          <Route path="/" element={<UserLayout auth={auth} onLogout={() => { localStorage.removeItem('token'); setAuth(null); }} />}>
-            <Route index element={<UserDashboard />} />
-            <Route path="keys" element={<UserKeys />} />
-            <Route path="logs" element={<UserLogs />} />
-            <Route path="bills" element={<UserBills />} />
-          </Route>
-        )}
-
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
   );
