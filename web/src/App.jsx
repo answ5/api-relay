@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { me } from './api';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Layout from './pages/Layout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
@@ -30,6 +31,7 @@ export default function App() {
     <HashRouter>
       <Routes>
         <Route path="/login" element={auth ? <Navigate to="/" /> : <Login onLogin={setAuth} />} />
+        <Route path="/register" element={auth ? <Navigate to="/" /> : <Register />} />
         <Route path="/" element={auth ? <Layout auth={auth} onLogout={() => { localStorage.removeItem('token'); setAuth(null); }} /> : <Navigate to="/login" />}>
           <Route index element={<Dashboard />} />
           <Route path="users" element={<Users />} />

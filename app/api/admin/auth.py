@@ -7,7 +7,7 @@ from typing import Any
 from argon2 import PasswordHasher
 from argon2.exceptions import VerificationError
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import select, text
 
 from app.core.jwt import create_admin_token
@@ -26,6 +26,26 @@ ph = PasswordHasher()
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    email: str = ""
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        if len(v) < 3 or len(v) > 32:
+            raise ValueError("用户名长度需在 3-32 个字符之间")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("密码长度至少 6 位")
+        return v
 
 
 class LoginResponse(BaseModel):
@@ -117,6 +137,50 @@ async def login(body: LoginRequest) -> LoginResponse:
             "role": user.role,
         },
     )
+
+
+@router.post("/register", status_code=201)
+async def register(body: RegisterRequest) -> dict:
+    """Register a new user account (role='user')."""
+    from sqlalchemy import func
+
+    # Check username already taken
+    async with get_session_sync()() as session:
+        result = await session.execute(
+            select(User).where(User.username == body.username)
+        )
+        if result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "error": {
+                        "message": "用户名已被注册",
+                        "type": "conflict",
+                    }
+                },
+            )
+
+        # Create user
+        pw_hash = ph.hash(body.password)
+        user = User(
+            username=body.username,
+            password_hash=pw_hash,
+            email=body.email or "",
+            role="user",
+            balance=0,
+            status=1,
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "message": "注册成功",
+    }
 
 
 @router.post("/logout")

@@ -113,18 +113,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
     @staticmethod
     def _should_skip(path: str) -> bool:
         """Determine whether a path should skip API key authentication."""
-        # FastAPI built-in docs
-        if path in {"/docs", "/redoc", "/openapi.json", "/favicon.ico"}:
-            return True
-        # Admin routes use JWT session auth
-        if path.startswith("/api/admin/"):
-            return True
-        # Health check
-        if path == "/health":
-            return True
-        # Frontend static assets and SPA routes
-        if path.startswith("/assets/"):
-            return True
-        if path in {"/", "/index.html"}:
-            return True
-        return False
+        # Only require API key for OpenAI-compatible API routes
+        if path.startswith("/v1"):
+            return False
+        # Everything else is unauthenticated (frontend, admin API uses JWT, docs)
+        return True
