@@ -23,12 +23,48 @@ api.interceptors.response.use(
   },
 );
 
+// ── Auth (works for both admin & user) ──
 export function login(username, password) {
   return api.post('/auth/login', { username, password });
 }
 export function me() { return api.get('/auth/me'); }
 export function logout() { return api.post('/auth/logout'); }
 
+// ── User-facing API (uses auth JWT, not API key) ──
+const userApi = axios.create({
+  baseURL: '/relay/api/user',
+});
+userApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+userApi.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.hash = '/login';
+    }
+    return Promise.reject(err);
+  },
+);
+
+export function userMe() { return userApi.get('/auth/me'); }
+export function userProfile() { return userApi.get('/profile'); }
+export function userUpdateProfile(data) { return userApi.put('/profile', data); }
+export function userDashboardStats() { return userApi.get('/stats/dashboard'); }
+export function userListTokens(params) { return userApi.get('/tokens', { params }); }
+export function userCreateToken(data) { return userApi.post('/tokens', data); }
+export function userDeleteToken(id) { return userApi.delete(`/tokens/${id}`); }
+export function userRenameToken(id, data) { return userApi.put(`/tokens/${id}/name`, data); }
+export function userListLogs(params) { return userApi.get('/logs', { params }); }
+export function userListTransactions(params) { return userApi.get('/transactions', { params }); }
+export function userLogsStats() { return userApi.get('/logs/stats'); }
+
+// ── Admin API (protected, requires admin role) ──
 export function listUsers(params) { return api.get('/users', { params }); }
 export function createUser(data) { return api.post('/users', data); }
 export function updateUser(id, data) { return api.put(`/users/${id}`, data); }

@@ -50,18 +50,8 @@ def get_current_token_id(request: Request) -> int | None:
     return getattr(request.state, "token_id", None)
 
 
-def require_admin(request: Request) -> int:
-    """Dependency that requires a valid admin JWT session.
-
-    Used on admin routes. Checks the Authorization: Bearer <jwt> header
-    and verifies the token is a valid admin JWT.
-
-    Returns:
-        The admin user ID.
-
-    Raises:
-        HTTPException(401) if not authenticated.
-    """
+def _validate_jwt(request: Request) -> dict:
+    """Validate JWT from Authorization header and return payload."""
     from app.core.jwt import decode_admin_token
 
     auth_header = request.headers.get("Authorization", "")
@@ -99,10 +89,47 @@ def require_admin(request: Request) -> int:
                 }
             },
         )
+    return payload
 
-    # Store admin info in request.state for downstream use
-    request.state.admin_user_id = int(payload["sub"])
+
+def require_auth(request: Request) -> int:
+    """Dependency that requires a valid JWT (any role, including user).
+
+    Stores auth info in request.state:
+        user_id, username, user_role
+    """
+    payload = _validate_jwt(request)
+    uid = int(payload["sub"])
+    request.state.user_id = uid
+    request.state.username = payload["username"]
+    request.state.user_role = payload["role"]
+    return uid
+
+
+def require_admin(request: Request) -> int:
+    """Dependency that requires a valid JWT with admin/super_admin role.
+
+    Raises:
+        HTTPException(403) if user is not an admin.
+    """
+    payload = _validate_jwt(request)
+    role = payload.get("role", "")
+
+    if role not in ("admin", "super_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": {
+                    "message": "Admin access required.",
+                    "type": "authorization_error",
+                    "param": None,
+                    "code": "forbidden",
+                }
+            },
+        )
+
+    uid = int(payload["sub"])
+    request.state.admin_user_id = uid
     request.state.admin_username = payload["username"]
-    request.state.admin_role = payload["role"]
-
-    return int(payload["sub"])
+    request.state.admin_role = role
+    return uid

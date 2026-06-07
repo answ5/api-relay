@@ -108,20 +108,6 @@ async def login(body: LoginRequest) -> LoginResponse:
             },
         )
 
-    # Check admin role
-    if user.role not in ("admin", "super_admin"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "error": {
-                    "message": "Insufficient permissions. Admin access required.",
-                    "type": "authorization_error",
-                    "param": None,
-                    "code": "forbidden",
-                }
-            },
-        )
-
     # Issue JWT
     token = create_admin_token(
         user_id=user.id,

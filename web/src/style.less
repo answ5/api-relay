@@ -151,6 +151,30 @@ tr:hover td { background: #f8f9ff; }
 .login-box h1 { text-align: center; margin-bottom: 28px; font-size: 1.3rem; }
 .login-box h1 span { color: var(--primary); }
 
+/* User layout (consistent with admin) */
+.app-layout { display: flex; min-height: 100vh; }
+.app-layout .sidebar { width: 220px; background: var(--text); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+.app-layout .sidebar-header { padding: 20px 16px; border-bottom: 1px solid rgba(255,255,255,.1); }
+.app-layout .sidebar-header h2 { font-size: 1.2rem; font-weight: 700; }
+.app-layout .sidebar-header h2 span { color: var(--primary); }
+.app-layout .sidebar-user { font-size: .85rem; color: rgba(255,255,255,.6); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.app-layout .sidebar-nav { flex: 1; padding: 8px; }
+.app-layout .sidebar-nav .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: rgba(255,255,255,.7); border-radius: 6px; transition: all .15s; margin-bottom: 2px; font-size: .9rem; text-decoration: none; }
+.app-layout .sidebar-nav .nav-item:hover, .app-layout .sidebar-nav .nav-item.active { background: rgba(255,255,255,.1); color: #fff; }
+.app-layout .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,.1); }
+.app-layout .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 20px 24px; }
+.page-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; }
+.role-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: .75rem; font-weight: 500; }
+.role-badge.user { background: rgba(255,255,255,.15); color: rgba(255,255,255,.85); }
+.role-badge.admin { background: #4f6ef7; color: #fff; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th, .data-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: .9rem; }
+.data-table th { font-weight: 600; color: var(--text2); font-size: .85rem; white-space: nowrap; }
+.data-table tbody tr:hover td { background: #f8f9ff; }
+.status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .78rem; font-weight: 500; }
+.status-badge.active { background: #e8f5e9; color: #2e7d32; }
+.status-badge.disabled { background: #fbe9e7; color: #c62828; }
+
 /* Charts placeholder */
 .chart-placeholder { height: 200px; display: flex; align-items: center; justify-content: center; color: var(--text2); background: #fafbfc; border-radius: var(--radius); border: 1px dashed var(--border); }
 
