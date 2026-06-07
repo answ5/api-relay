@@ -122,4 +122,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Health check
         if path == "/health":
             return True
+        # Frontend static assets and SPA routes
+        if path.startswith("/assets/"):
+            return True
+        if path in {"/", "/index.html"}:
+            return True
         return False
