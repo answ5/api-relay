@@ -1,0 +1,43 @@
+# ============================
+# API Relay 配置
+# ============================
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+
+database:
+  url: "mysql+aiomysql://relay:password@localhost:3306/relay?charset=utf8mb4"
+  pool_size: 10
+  max_overflow: 20
+
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: ""
+
+auth:
+  # API Key 前缀
+  key_prefix: "sk-"
+  # 管理后台 JWT 密钥
+  jwt_secret: "change-me-in-production"
+  jwt_expire_hours: 24
+
+payload:
+  enabled: true
+  retention_days: 30
+  max_size_mb: 10
+
+logging:
+  level: "INFO"
+  # 异步日志队列
+  log_queue: "log_queue"
+  payload_queue: "payload_queue"
+  batch_size: 100
+  batch_interval_sec: 1
+
+rate_limiter:
+  default_rate_per_minute: 100
+  redis_prefix: "ratelimit"
