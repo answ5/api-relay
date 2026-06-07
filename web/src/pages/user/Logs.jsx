@@ -27,9 +27,9 @@ export default function UserLogs() {
     <div>
       <h2 className="page-title">使用日志</h2>
 
-      {loading ? <div className="loading">加载中...</div> : (
-        <div className="card">
-          <table className="data-table">
+      {loading ? <div className="user-empty">加载中...</div> : (
+        <div className="user-card">
+          <table className="user-table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -45,14 +45,14 @@ export default function UserLogs() {
             </thead>
             <tbody>
               {logs.length === 0 ? (
-                <tr><td colSpan={9} style={{ textAlign: 'center', color: '#888' }}>暂无使用记录</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: 'center', color: '#bbb' }}>暂无使用记录</td></tr>
               ) : logs.map((log) => (
                 <tr key={log.id}>
-                  <td style={{ fontSize: '.8rem', color: '#888' }}>{log.id}</td>
+                  <td style={{ fontSize: '.8rem', color: '#999' }}>{log.id}</td>
                   <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {log.model_name}
                   </td>
-                  <td><span className={`status-badge ${log.status === 'success' ? 'active' : 'disabled'}`}>
+                  <td><span className={`user-badge ${log.status === 'success' ? 'user-badge-green' : 'user-badge-red'}`}>
                     {log.status}
                   </span></td>
                   <td>{(log.prompt_tokens || 0).toLocaleString()}</td>
@@ -60,13 +60,13 @@ export default function UserLogs() {
                   <td>{(log.total_tokens || 0).toLocaleString()}</td>
                   <td>{formatCost(log.user_cost)}</td>
                   <td>{log.response_ms ? `${log.response_ms}ms` : '-'}</td>
-                  <td style={{ fontSize: '.8rem', color: '#888' }}>{formatTime(log.created_at)}</td>
+                  <td style={{ fontSize: '.8rem', color: '#999' }}>{formatTime(log.created_at)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {total > 20 && (
-            <div className="pagination">
+            <div className="user-pagination">
               <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>上一页</button>
               <span>第 {page} / {Math.ceil(total / 20)} 页</span>
               <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一页</button>

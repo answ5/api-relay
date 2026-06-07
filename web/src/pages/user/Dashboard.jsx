@@ -16,35 +16,29 @@ export default function UserDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading">加载中...</div>;
+  if (loading) return <div className="user-empty">加载中...</div>;
 
   const summary = stats?.summary || {};
   const modelUsage = stats?.model_usage || [];
 
   return (
-    <div className="dashboard">
+    <div>
       <h2 className="page-title">我的概览</h2>
 
-      <div className="balance-card" style={{
-        background: 'linear-gradient(135deg, var(--primary), #7c3aed)',
-        borderRadius: 12, padding: '24px 32px', color: '#fff', marginBottom: 24,
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      }}>
+      <div className="user-balance-card">
         <div>
-          <div style={{ fontSize: '.85rem', opacity: .8 }}>账户余额</div>
-          <div style={{ fontSize: '2rem', fontWeight: 700 }}>
-            ¥{parseFloat(profile?.balance || 0).toFixed(4)}
-          </div>
+          <div className="user-balance-label">账户余额</div>
+          <div className="user-balance-amount">¥{parseFloat(profile?.balance || 0).toFixed(4)}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '.85rem', opacity: .8 }}>累计消费</div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+          <div className="user-balance-label">累计消费</div>
+          <div className="" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
             ¥{parseFloat(summary.total_spent || 0).toFixed(4)}
           </div>
         </div>
       </div>
 
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
+      <div className="user-stats-grid">
         {[
           { label: '今日请求', value: summary.today_requests || 0 },
           { label: '今日消耗 Tokens', value: (summary.today_tokens || 0).toLocaleString() },
@@ -53,20 +47,17 @@ export default function UserDashboard() {
           { label: '有效 API Keys', value: summary.active_tokens || 0 },
           { label: '累计 Tokens', value: (summary.total_tokens_all_time || 0).toLocaleString() },
         ].map((item, i) => (
-          <div key={i} className="stat-card" style={{
-            background: 'var(--card-bg)', borderRadius: 10, padding: '16px 20px',
-            border: '1px solid var(--border)',
-          }}>
-            <div style={{ fontSize: '.8rem', color: '#888', marginBottom: 4 }}>{item.label}</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{item.value}</div>
+          <div key={i} className="user-stat-card">
+            <div className="stat-label">{item.label}</div>
+            <div className="stat-value">{item.value}</div>
           </div>
         ))}
       </div>
 
-      {modelUsage.length > 0 && (
-        <div className="card">
-          <h3 style={{ marginBottom: 12 }}>今日模型使用</h3>
-          <table className="data-table">
+      {modelUsage.length > 0 ? (
+        <div className="user-card">
+          <div className="user-section-title">今日模型使用</div>
+          <table className="user-table">
             <thead>
               <tr>
                 <th>模型</th>
@@ -87,10 +78,9 @@ export default function UserDashboard() {
             </tbody>
           </table>
         </div>
-      )}
-
-      {(!modelUsage || modelUsage.length === 0) && (
-        <div className="card" style={{ textAlign: 'center', padding: 40, color: '#888' }}>
+      ) : (
+        <div className="user-empty">
+          <div className="user-empty-icon">📭</div>
           <p>暂无使用记录。创建 API Key 后即可开始使用～</p>
         </div>
       )}

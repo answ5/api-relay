@@ -38,9 +38,9 @@ export default function UserBills() {
     <div>
       <h2 className="page-title">消费记录</h2>
 
-      {loading ? <div className="loading">加载中...</div> : (
-        <div className="card">
-          <table className="data-table">
+      {loading ? <div className="user-empty">加载中...</div> : (
+        <div className="user-card">
+          <table className="user-table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -53,26 +53,26 @@ export default function UserBills() {
             </thead>
             <tbody>
               {txns.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: '#888' }}>暂无记录</td></tr>
+                <tr><td colSpan={6} style={{ textAlign: 'center', color: '#bbb' }}>暂无记录</td></tr>
               ) : txns.map((t) => (
                 <tr key={t.id}>
-                  <td style={{ fontSize: '.8rem', color: '#888' }}>{t.id}</td>
+                  <td style={{ fontSize: '.8rem', color: '#999' }}>{t.id}</td>
                   <td><span style={{
-                    color: t.type === 'consume' ? 'var(--danger)' : 'var(--success)',
+                    color: t.type === 'consume' ? '#cf1322' : '#52c41a',
                     fontWeight: 600,
                   }}>{typeLabel(t.type)}</span></td>
-                  <td style={{ color: t.amount < 0 ? 'var(--danger)' : 'var(--success)' }}>
+                  <td style={{ color: t.amount < 0 ? '#cf1322' : '#52c41a' }}>
                     {formatCost(t.amount)}
                   </td>
                   <td>¥{parseFloat(t.balance_after || 0).toFixed(4)}</td>
-                  <td style={{ color: '#888', fontSize: '.85rem' }}>{t.note || '-'}</td>
-                  <td style={{ fontSize: '.8rem', color: '#888' }}>{formatTime(t.created_at)}</td>
+                  <td style={{ color: '#999', fontSize: '.85rem' }}>{t.note || '-'}</td>
+                  <td style={{ fontSize: '.8rem', color: '#999' }}>{formatTime(t.created_at)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {totalPages > 1 && (
-            <div className="pagination">
+            <div className="user-pagination">
               <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>上一页</button>
               <span>第 {page} / {totalPages} 页</span>
               <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>下一页</button>

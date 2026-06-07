@@ -33,7 +33,7 @@ export default function UserKeys() {
       setName('');
       loadTokens();
     } catch (err) {
-      setError(err.response?.data?.error?.message || '创建失败');
+      setError(err.response?.data?.detail?.error?.message || '创建失败');
     } finally {
       setCreating(false);
     }
@@ -59,18 +59,12 @@ export default function UserKeys() {
       <h2 className="page-title">API Keys</h2>
 
       {newKey && (
-        <div className="card" style={{
-          border: '2px solid var(--success)', marginBottom: 20, padding: 20, borderRadius: 10,
-        }}>
-          <h3 style={{ color: 'var(--success)', marginBottom: 8 }}>API Key 创建成功！</h3>
-          <p style={{ fontSize: '.85rem', color: '#888', marginBottom: 12 }}>
+        <div className="user-newkey-box">
+          <h3>✅ API Key 创建成功！</h3>
+          <p style={{ fontSize: '.85rem', color: '#666', marginBottom: 12 }}>
             请立即保存此 Key，关闭后将无法再次查看。
           </p>
-          <div style={{
-            background: '#111', padding: '12px 16px', borderRadius: 8,
-            fontFamily: 'monospace', fontSize: '.85rem', wordBreak: 'break-all',
-            marginBottom: 12, color: '#4ade80',
-          }}>
+          <div className="user-key-display">
             sk-{newKey.raw_key}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -84,10 +78,10 @@ export default function UserKeys() {
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 20, padding: 20 }}>
+      <div className="user-create-key-box">
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
           <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-            <label>备注名称（可选）</label>
+            <label>备注名称</label>
             <input value={name} onChange={(e) => setName(e.target.value)}
               placeholder="例如：我的测试 Key" style={{ width: '100%' }} />
           </div>
@@ -96,12 +90,12 @@ export default function UserKeys() {
             {creating ? '创建中...' : '创建新 Key'}
           </button>
         </div>
-        {error && <p style={{ color: 'var(--danger)', fontSize: '.85rem', marginTop: 8 }}>{error}</p>}
+        {error && <p style={{ color: '#cf1322', fontSize: '.85rem', marginTop: 8 }}>{error}</p>}
       </div>
 
-      {loading ? <div className="loading">加载中...</div> : (
-        <div className="card">
-          <table className="data-table">
+      {loading ? <div className="user-empty">加载中...</div> : (
+        <div className="user-card">
+          <table className="user-table">
             <thead>
               <tr>
                 <th>名称</th>
@@ -116,18 +110,18 @@ export default function UserKeys() {
             </thead>
             <tbody>
               {tokens.length === 0 ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', color: '#888' }}>暂无 API Key</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: 'center', color: '#bbb' }}>暂无 API Key</td></tr>
               ) : tokens.map((t) => (
                 <tr key={t.id}>
                   <td>{t.name || '-'}</td>
-                  <td><code style={{ fontSize: '.8rem' }}>sk-{t.key_prefix}...</code></td>
-                  <td><span className={`status-badge ${t.status === 1 ? 'active' : 'disabled'}`}>
+                  <td><code style={{ fontSize: '.8rem', background: '#f5f5f5', padding: '2px 6px', borderRadius: 4 }}>sk-{t.key_prefix}...</code></td>
+                  <td><span className={`user-badge ${t.status === 1 ? 'user-badge-green' : 'user-badge-red'}`}>
                     {t.status === 1 ? '启用' : '禁用'}
                   </span></td>
                   <td>{t.group_name}</td>
                   <td>¥{parseFloat(t.balance_limit || 0).toFixed(2)}</td>
-                  <td style={{ fontSize: '.8rem', color: '#888' }}>{t.last_used_at || '-'}</td>
-                  <td style={{ fontSize: '.8rem', color: '#888' }}>{t.created_at || '-'}</td>
+                  <td style={{ fontSize: '.8rem', color: '#999' }}>{t.last_used_at || '-'}</td>
+                  <td style={{ fontSize: '.8rem', color: '#999' }}>{t.created_at || '-'}</td>
                   <td>
                     <button className="btn btn-danger btn-sm" onClick={() => handleDelete(t.id)}>
                       删除
@@ -138,7 +132,7 @@ export default function UserKeys() {
             </tbody>
           </table>
           {total > 20 && (
-            <div className="pagination">
+            <div className="user-pagination">
               <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>上一页</button>
               <span>第 {page} / {Math.ceil(total / 20)} 页</span>
               <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)}>下一页</button>
