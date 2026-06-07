@@ -13,6 +13,7 @@ from sqlalchemy import (
     BigInteger,
     ForeignKey,
     JSON,
+    LargeBinary,
     func,
 )
 from sqlalchemy.orm import DeclarativeBase
@@ -116,4 +117,14 @@ class Transaction(Base):
     balance_after = Column(DECIMAL(14, 4))
     note = Column(Text, default="")
     log_id = Column(BigInteger, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class RequestPayload(Base):
+    __tablename__ = "request_payloads"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    request_id = Column(String(64), nullable=False, index=True)
+    request_body = Column(LargeBinary, nullable=True)
+    response_body = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
