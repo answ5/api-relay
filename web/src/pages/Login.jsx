@@ -18,7 +18,7 @@ export default function Login({ onLogin }) {
       localStorage.setItem('token', res.data.access_token);
       onLogin(res.data.user);
     } catch (err) {
-      setError(err.response?.data?.error?.message || '登录失败');
+      setError(err.response?.data?.detail?.error?.message || '登录失败');
     } finally {
       setLoading(false);
     }
