@@ -6,3 +6,7 @@ venv/
 .env
 *.db
 *.sqlite3
+node_modules/
+.hhermes/
+.hermes/
+web/dist/
