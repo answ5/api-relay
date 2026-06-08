@@ -24,6 +24,8 @@ auth:
   # 管理后台 JWT 密钥
   jwt_secret: "change-me-in-production"
   jwt_expire_hours: 24
+  # 是否允许用户注册
+  allow_register: true
 
 payload:
   enabled: true

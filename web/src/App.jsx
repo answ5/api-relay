@@ -16,6 +16,9 @@ import ModelPricing from './pages/ModelPricing';
 import Logs from './pages/Logs';
 import Transactions from './pages/Transactions';
 import TestChat from './pages/TestChat';
+import Settings from './pages/Settings';
+import PluginManager from './pages/PluginManager';
+import Home from './pages/Home';
 
 // User pages
 import UserLayout from './pages/user/Layout';
@@ -23,6 +26,7 @@ import UserDashboard from './pages/user/Dashboard';
 import UserKeys from './pages/user/Keys';
 import UserLogs from './pages/user/Logs';
 import UserBills from './pages/user/Bills';
+import UserRecharge from './pages/user/Recharge';
 
 function ProtectedRoute({ auth, children }) {
   if (!auth) return <Navigate to="/login" replace />;
@@ -83,10 +87,12 @@ export default function App() {
     <HashRouter>
       <Routes>
         {/* Public routes */}
-        <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={setAuth} />} />
-        <Route path="/register" element={auth ? <Navigate to="/" replace /> : <Register />} />
-        <Route path="/forgot-password" element={auth ? <Navigate to="/" replace /> : <ForgotPassword />} />
-        <Route path="/reset-password" element={auth ? <Navigate to="/" replace /> : <ResetPassword />} />
+        <Route path="/" element={auth ? <Navigate to="/dashboard" replace /> : <Home />} />
+        <Route path="/home" element={auth ? <Navigate to="/dashboard" replace /> : <Home />} />
+        <Route path="/login" element={auth ? <Navigate to="/dashboard" replace /> : <Login onLogin={setAuth} />} />
+        <Route path="/register" element={auth ? <Navigate to="/dashboard" replace /> : <Register />} />
+        <Route path="/forgot-password" element={auth ? <Navigate to="/dashboard" replace /> : <ForgotPassword />} />
+        <Route path="/reset-password" element={auth ? <Navigate to="/dashboard" replace /> : <ResetPassword />} />
 
         {/* Admin layout + routes */}
         <Route path="/" element={
@@ -97,14 +103,17 @@ export default function App() {
             }
           </ProtectedRoute>
         }>
-          {/* Admin-only pages */}
-          <Route index element={isAdmin ? <Dashboard /> : <UserDashboard />} />
+          {/* Dashboard route — must be explicit for redirects */}
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={isAdmin ? <Dashboard /> : <UserDashboard />} />
           <Route path="users" element={<AdminRoute auth={auth}><Users /></AdminRoute>} />
           <Route path="tokens" element={<AdminRoute auth={auth}><Tokens /></AdminRoute>} />
           <Route path="channels" element={<AdminRoute auth={auth}><Channels /></AdminRoute>} />
           <Route path="models" element={<AdminRoute auth={auth}><ModelPricing /></AdminRoute>} />
           <Route path="transactions" element={<AdminRoute auth={auth}><Transactions /></AdminRoute>} />
           <Route path="chat-test" element={<AdminRoute auth={auth}><TestChat /></AdminRoute>} />
+          <Route path="settings" element={<AdminRoute auth={auth}><Settings /></AdminRoute>} />
+          <Route path="plugins" element={<AdminRoute auth={auth}><PluginManager /></AdminRoute>} />
           {/* Shared pages */}
           <Route path="logs" element={
             isAdmin ? <Logs /> : <UserLogs />
@@ -112,6 +121,7 @@ export default function App() {
           {/* User-only pages */}
           <Route path="keys" element={<UserRoute auth={auth}><UserKeys /></UserRoute>} />
           <Route path="bills" element={<UserRoute auth={auth}><UserBills /></UserRoute>} />
+          <Route path="recharge" element={<UserRoute auth={auth}><UserRecharge /></UserRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

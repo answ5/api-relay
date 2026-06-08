@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 
 const sections = [
   { label: '管理', items: [
-    { path: '/', label: '仪表盘', icon: '📊' },
+    { path: '/dashboard', label: '仪表盘', icon: '📊' },
     { path: '/users', label: '用户管理', icon: '👥' },
     { path: '/tokens', label: 'Token 管理', icon: '🔑' },
     { path: '/channels', label: '渠道管理', icon: '🔗' },
@@ -15,6 +15,8 @@ const sections = [
   ]},
   { label: '工具', items: [
     { path: '/chat-test', label: '在线测试', icon: '🧪' },
+    { path: '/plugins', label: '插件管理', icon: '🧩' },
+    { path: '/settings', label: '系统设置', icon: '⚙️' },
   ]},
 ];
 

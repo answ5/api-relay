@@ -19,7 +19,7 @@ export default function Login({ onLogin }) {
       localStorage.setItem('token', res.data.access_token);
       const meRes = await me();
       onLogin(meRes.data);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error?.message || err.response?.data?.detail?.error?.message || '登录失败');
     } finally {
@@ -71,6 +71,9 @@ export default function Login({ onLogin }) {
           </button>
         </form>
         <p style={{ textAlign: 'center', marginTop: 18, fontSize: '.85rem', color: 'var(--text2)' }}>
+          <Link to="/" style={{ color: '#818cf8', textDecoration: 'none' }}>← 返回首页</Link>
+        </p>
+        <p style={{ textAlign: 'center', marginTop: 8, fontSize: '.85rem', color: 'var(--text2)' }}>
           没有账号？<Link to="/register">立即注册</Link>
           <span style={{ margin: '0 8px', color: 'var(--border)' }}>|</span>
           <Link to="/forgot-password">忘记密码</Link>

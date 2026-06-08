@@ -131,6 +131,20 @@ async def login(body: LoginRequest) -> LoginResponse:
 async def register(body: RegisterRequest) -> dict:
     """Register a new user account (role='user')."""
 
+    # Check if registration is allowed
+    from app.config import get_config
+    cfg = get_config()
+    if not cfg.get("auth", {}).get("allow_register", True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": {
+                    "message": "注册已关闭，请联系管理员",
+                    "type": "registration_closed",
+                }
+            },
+        )
+
     # Check username already taken
     async with get_session_sync()() as session:
         async with session.begin():

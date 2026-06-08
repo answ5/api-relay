@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { listChannels, createChannel, updateChannel, healthCheckChannel } from '../api';
+import api from '../api';
 
 export default function Channels() {
   const [channels, setChannels] = useState([]);
@@ -9,6 +10,7 @@ export default function Channels() {
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState(null);
   const [healthResult, setHealthResult] = useState(null);
+  const [balanceResult, setBalanceResult] = useState(null);
   const size = 20;
 
   const showToast = (msg, type = 'success') => {
@@ -51,6 +53,17 @@ export default function Channels() {
     setTimeout(() => setHealthResult(null), 5000);
   };
 
+  const handleBalanceCheck = async (id) => {
+    setBalanceResult({ checking: true, id });
+    try {
+      const res = await api.post(`/channels/${id}/balance`);
+      setBalanceResult({ ...res.data?.data, checking: false, id });
+    } catch (e) {
+      setBalanceResult({ error: '查询失败', checking: false, id });
+    }
+    setTimeout(() => setBalanceResult(null), 8000);
+  };
+
   return (
     <div>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
@@ -82,9 +95,17 @@ export default function Channels() {
                       <button className="btn btn-ghost btn-sm" onClick={() => handleHealthCheck(c.id)} disabled={healthResult?.checking && healthResult?.id === c.id}>
                         {healthResult?.checking && healthResult?.id === c.id ? '检查中...' : '🩺'}
                       </button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => handleBalanceCheck(c.id)} disabled={balanceResult?.checking && balanceResult?.id === c.id}>
+                        {balanceResult?.checking && balanceResult?.id === c.id ? '查询中...' : '💰'}
+                      </button>
                       {healthResult && healthResult.id === c.id && !healthResult.checking && (
                         <span style={{ fontSize: '.75rem', marginLeft: 4, color: healthResult.reachable ? 'var(--success)' : 'var(--danger)' }}>
                           {healthResult.reachable ? `连通 ${healthResult.response_time_ms}ms` : (healthResult.error || '不可达')}
+                        </span>
+                      )}
+                      {balanceResult && balanceResult.id === c.id && !balanceResult.checking && (
+                        <span style={{ fontSize: '.75rem', marginLeft: 4, color: 'var(--text2)' }}>
+                          {balanceResult.results ? `${balanceResult.results.length} 个端点` : (balanceResult.error || '无数据')}
                         </span>
                       )}
                     </td>

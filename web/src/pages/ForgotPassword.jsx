@@ -95,7 +95,10 @@ export default function ForgotPassword() {
           </div>
         )}
         <p style={{ textAlign: 'center', marginTop: 18, fontSize: '.85rem', color: 'var(--text2)' }}>
-          想起密码了？<Link to="/login">返回登录</Link>
+          <Link to="/" style={{ color: '#818cf8', textDecoration: 'none' }}>← 返回首页</Link>
+        </p>
+        <p style={{ textAlign: 'center', marginTop: 8, fontSize: '.85rem', color: 'var(--text2)' }}>
+          <Link to="/login">返回登录</Link>
         </p>
       </div>
     </div>

@@ -90,7 +90,10 @@ export default function Register() {
             {loading ? '注册中...' : '注册'}
           </button>
         </form>
-        <p style={{ textAlign: 'center', marginTop: 18, fontSize: '.85rem', color: 'var(--text2)' }}>
+        <p style={{ textAlign: 'center', marginTop: 6, fontSize: '.85rem', color: 'var(--text2)' }}>
+          <Link to="/" style={{ color: '#818cf8', textDecoration: 'none' }}>← 返回首页</Link>
+        </p>
+        <p style={{ textAlign: 'center', marginTop: 6, fontSize: '.85rem', color: 'var(--text2)' }}>
           已有账号？<Link to="/login">去登录</Link>
         </p>
       </div>

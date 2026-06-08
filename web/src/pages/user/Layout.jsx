@@ -31,6 +31,9 @@ export default function UserLayout({ auth, onLogout }) {
             <NavLink to="/bills" className={({ isActive }) => isActive ? 'user-nav-item active' : 'user-nav-item'}>
               消费记录
             </NavLink>
+            <NavLink to="/recharge" className={({ isActive }) => isActive ? 'user-nav-item active' : 'user-nav-item'}>
+              充值
+            </NavLink>
           </nav>
 
           <div className="user-header-right">

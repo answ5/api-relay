@@ -10,6 +10,7 @@ from app.api.user.tokens import router as tokens_router
 from app.api.user.logs import router as logs_router
 from app.api.user.transactions import router as transactions_router
 from app.api.user.stats import router as stats_router
+from app.api.user.recharge import router as recharge_router
 
 router = APIRouter()
 router.include_router(auth_router)
@@ -18,3 +19,4 @@ router.include_router(tokens_router)
 router.include_router(logs_router)
 router.include_router(transactions_router)
 router.include_router(stats_router)
+router.include_router(recharge_router)

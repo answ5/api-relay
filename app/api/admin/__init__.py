@@ -13,6 +13,8 @@ from app.api.admin.logs import router as logs_router
 from app.api.admin.stats import router as stats_router
 from app.api.admin.config import router as config_router
 from app.api.admin.test import router as test_router
+from app.api.admin.plugins import router as plugins_router
+from app.api.admin.balance import router as balance_router
 
 router = APIRouter()
 router.include_router(auth_router)
@@ -24,3 +26,5 @@ router.include_router(logs_router)
 router.include_router(stats_router)
 router.include_router(config_router)
 router.include_router(test_router)
+router.include_router(plugins_router)
+router.include_router(balance_router)
