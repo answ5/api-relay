@@ -16,7 +16,7 @@ export default function Login({ onLogin }) {
     setLoading(true);
     try {
       const res = await login(username, password);
-      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('token', res.data.access_token);
       const meRes = await me();
       onLogin(meRes.data);
       navigate('/');
