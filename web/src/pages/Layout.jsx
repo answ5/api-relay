@@ -13,6 +13,9 @@ const sections = [
     { path: '/logs', label: '请求日志', icon: '📋' },
     { path: '/transactions', label: '交易记录', icon: '💳' },
   ]},
+  { label: '工具', items: [
+    { path: '/chat-test', label: '在线测试', icon: '🧪' },
+  ]},
 ];
 
 const pageTitles = {};

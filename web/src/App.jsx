@@ -15,6 +15,7 @@ import Channels from './pages/Channels';
 import ModelPricing from './pages/ModelPricing';
 import Logs from './pages/Logs';
 import Transactions from './pages/Transactions';
+import TestChat from './pages/TestChat';
 
 // User pages
 import UserLayout from './pages/user/Layout';
@@ -103,6 +104,7 @@ export default function App() {
           <Route path="channels" element={<AdminRoute auth={auth}><Channels /></AdminRoute>} />
           <Route path="models" element={<AdminRoute auth={auth}><ModelPricing /></AdminRoute>} />
           <Route path="transactions" element={<AdminRoute auth={auth}><Transactions /></AdminRoute>} />
+          <Route path="chat-test" element={<AdminRoute auth={auth}><TestChat /></AdminRoute>} />
           {/* Shared pages */}
           <Route path="logs" element={
             isAdmin ? <Logs /> : <UserLogs />
