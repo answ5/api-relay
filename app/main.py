@@ -20,6 +20,7 @@ from app.workers import start_workers
 from app.api.v1 import router as v1_router
 from app.api.admin import router as admin_router
 from app.api.user import router as user_router
+from app.api.marketplace import router as marketplace_router
 from app.core.middleware import AuthMiddleware
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "web" / "dist"
@@ -114,6 +115,7 @@ app = FastAPI(
 app.include_router(v1_router, prefix="/v1")
 app.include_router(admin_router, prefix="/api/admin")
 app.include_router(user_router, prefix="/api/user")
+app.include_router(marketplace_router, prefix="/api")
 
 # ── Auth middleware ────────────────────────────────────────────────────────────
 app.add_middleware(AuthMiddleware)

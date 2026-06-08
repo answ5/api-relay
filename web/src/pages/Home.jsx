@@ -26,6 +26,9 @@ export default function Home() {
             支持多上游故障切换、精细计费、用户管理与插件扩展
           </p>
           <div className="landing-actions">
+            <Link to="/market" className="landing-btn landing-btn-secondary">
+              浏览模型广场
+            </Link>
             <Link to="/login" className="landing-btn landing-btn-primary">
               立即登录
             </Link>

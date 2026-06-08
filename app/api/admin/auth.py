@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import secrets
 
 from app.core.jwt import create_admin_token
-from app.core.routes import require_admin
+from app.core.routes import require_admin, require_auth
 from app.database import get_session_sync
 from app.models import User, PasswordReset
 
@@ -301,13 +301,13 @@ async def logout(request: Request) -> dict[str, str]:
 
 
 @router.get("/me", response_model=AdminUserResponse)
-async def me(request: Request, _: Any = Depends(require_admin)) -> AdminUserResponse:
-    """Return the currently authenticated admin user's info.
+async def me(request: Request, _: Any = Depends(require_auth)) -> AdminUserResponse:
+    """Return the currently authenticated user's info.
 
-    Requires a valid JWT in the Authorization header.
+    Requires a valid JWT in the Authorization header. Works for all roles.
     """
     return AdminUserResponse(
-        id=request.state.admin_user_id,
-        username=request.state.admin_username,
-        role=request.state.admin_role,
+        id=request.state.user_id,
+        username=request.state.username,
+        role=request.state.user_role,
     )

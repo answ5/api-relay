@@ -1,7 +1,8 @@
-"""User API — Recharge code redemption."""
+"""User API — Recharge code redemption + online payment."""
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -10,6 +11,7 @@ from sqlalchemy import text
 
 from app.core.routes import require_auth
 from app.database import get_session_sync
+from app.plugin.context import get_global_context
 
 router = APIRouter(prefix="/recharge", tags=["User Recharge"])
 
@@ -19,6 +21,11 @@ router = APIRouter(prefix="/recharge", tags=["User Recharge"])
 
 class RedeemRequest(BaseModel):
     code: str
+
+
+class CreateOrderRequest(BaseModel):
+    amount: float
+    channel: str = "alipay"  # alipay | wxpay
 
 
 # ── Error helper (consistent with admin/users.py) ──────────────────────────
@@ -132,5 +139,65 @@ async def redeem_code(
             "amount": amount,
             "previous_balance": current_balance,
             "new_balance": new_balance,
+        },
+    }
+
+
+# ── Online payment (EPay) ─────────────────────────────────────────────────
+
+
+@router.post("/create")
+async def create_recharge_order(
+    body: CreateOrderRequest,
+    request: Request,
+    _: Any = Depends(require_auth),
+) -> dict[str, Any]:
+    """Create an online recharge order via EPay.
+
+    Returns a ``pay_url`` that the user should be redirected to.
+    """
+    uid = request.state.user_id
+    amount = Decimal(str(body.amount))
+    channel = body.channel or "alipay"
+
+    if amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=_error("充值金额必须大于 0", "validation_error"),
+        )
+
+    # Import payment services from plugin
+    from plugins.payment_manual.service import (
+        calculate_bonus,
+        create_payment_order,
+    )
+
+    bonus = calculate_bonus(amount)
+    order = await create_payment_order(uid, amount, bonus, "epay", channel)
+
+    # Call EPay to get payment URL
+    pay_url = None
+    ctx = get_global_context()
+    if ctx:
+        epay_service = ctx.get_service("epay_create")
+        if epay_service:
+            try:
+                pay_url = await epay_service(order["id"], amount, channel)
+            except Exception as e:
+                # Order created but EPay call failed — still return order info
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=_error(f"支付网关异常: {str(e)}", "payment_gateway_error"),
+                )
+
+    return {
+        "success": True,
+        "data": {
+            "order_id": order["id"],
+            "amount": float(amount),
+            "bonus": float(bonus),
+            "total": float(amount + bonus),
+            "pay_url": pay_url,
+            "status": order["status"],
         },
     }

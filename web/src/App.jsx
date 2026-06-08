@@ -28,6 +28,9 @@ import UserLogs from './pages/user/Logs';
 import UserBills from './pages/user/Bills';
 import UserRecharge from './pages/user/Recharge';
 
+// Public pages
+import ModelMarket from './pages/ModelMarket';
+
 function ProtectedRoute({ auth, children }) {
   if (!auth) return <Navigate to="/login" replace />;
   return children;
@@ -86,15 +89,16 @@ export default function App() {
   return (
     <HashRouter>
       <Routes>
-        {/* Public routes */}
+        {/* Public routes (no auth needed) */}
         <Route path="/" element={auth ? <Navigate to="/dashboard" replace /> : <Home />} />
         <Route path="/home" element={auth ? <Navigate to="/dashboard" replace /> : <Home />} />
         <Route path="/login" element={auth ? <Navigate to="/dashboard" replace /> : <Login onLogin={setAuth} />} />
         <Route path="/register" element={auth ? <Navigate to="/dashboard" replace /> : <Register />} />
         <Route path="/forgot-password" element={auth ? <Navigate to="/dashboard" replace /> : <ForgotPassword />} />
         <Route path="/reset-password" element={auth ? <Navigate to="/dashboard" replace /> : <ResetPassword />} />
+        <Route path="/market" element={<ModelMarket />} />
 
-        {/* Admin layout + routes */}
+        {/* Authenticated layout */}
         <Route path="/" element={
           <ProtectedRoute auth={auth}>
             {isAdmin
@@ -103,7 +107,6 @@ export default function App() {
             }
           </ProtectedRoute>
         }>
-          {/* Dashboard route — must be explicit for redirects */}
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={isAdmin ? <Dashboard /> : <UserDashboard />} />
           <Route path="users" element={<AdminRoute auth={auth}><Users /></AdminRoute>} />
@@ -122,6 +125,8 @@ export default function App() {
           <Route path="keys" element={<UserRoute auth={auth}><UserKeys /></UserRoute>} />
           <Route path="bills" element={<UserRoute auth={auth}><UserBills /></UserRoute>} />
           <Route path="recharge" element={<UserRoute auth={auth}><UserRecharge /></UserRoute>} />
+          {/* Model marketplace (accessible when logged in too) */}
+          <Route path="market" element={<ModelMarket />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
