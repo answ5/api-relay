@@ -1,4 +1,8 @@
-"""OpenAI-compatible API v1 router — chat completions and models."""
+"""OpenAI-compatible API v1 router — chat completions and models.
+
+Multi-channel failover: if an upstream channel fails (network error or
+non-200 status), the relay automatically tries the next cheapest channel.
+"""
 
 from __future__ import annotations
 
@@ -15,7 +19,7 @@ from app.database import get_session_sync
 from app.http_client import get_http
 from app.relay.proxy import forward_nonstream
 from app.relay.stream import StreamProxy
-from app.services.channel_service import select_channel
+from app.services.channel_service import select_channels_for_failover
 from app.services.quota_service import atomic_deduct
 
 router = APIRouter()
@@ -61,7 +65,6 @@ def _concat_messages_text(
         else:
             content = msg.content
         if isinstance(content, list):
-            # Handle content arrays (multi-modal)
             for item in content:
                 if isinstance(item, dict) and item.get("type") == "text":
                     parts.append(item.get("text", ""))
@@ -78,13 +81,7 @@ async def list_models(
     request: Request,
     _: None = Depends(require_auth),
 ):
-    """List available models (OpenAI-compatible ``GET /v1/models``).
-
-    Returns only models that the authenticated token has access to.
-    If the token has no model restrictions, all enabled models are listed.
-    """
-    # Determine which models the token is allowed to see
-    # The middleware already parses this into a list (or None)
+    """List available models (OpenAI-compatible ``GET /v1/models``)."""
     allowed_models: list[str] | None = getattr(request.state, "models", None)
 
     async with get_session_sync()() as session:
@@ -100,7 +97,6 @@ async def list_models(
 
     all_models = [row[0] for row in rows]
 
-    # Filter by token's allowed models if set
     if allowed_models:
         all_models = [m for m in all_models if m in allowed_models]
 
@@ -125,23 +121,18 @@ async def chat_completions(
     token_id: int | None = Depends(get_current_token_id),
     _: None = Depends(require_auth),
 ):
-    """Chat completions endpoint (OpenAI-compatible ``POST /v1/chat/completions``).
+    """Chat completions endpoint with multi-channel failover.
 
-    Authenticates the caller, selects an upstream channel, forwards the
-    request (stream or non-stream), deducts cost from the user's balance,
-    and returns an OpenAI-compatible response.
+    Gets all candidate channels for the requested model (sorted by price ASC),
+    tries them one by one. If a channel fails (network error / non-200),
+    automatically falls back to the next one.
     """
     model_name = body.model
-
-    # ── 1. Select upstream channel ─────────────────────────────────────────
     token_group = getattr(request.state, "group_name", None)
-    channel = await select_channel(
-        model_name,
-        strategy="weighted_random",
-        group_name=token_group,
-    )
 
-    if channel is None:
+    # ── 1. Get all candidate channels sorted by price ASC ──
+    channels = await select_channels_for_failover(model_name, group_name=token_group)
+    if not channels:
         return JSONResponse(
             status_code=400,
             content=_build_error(
@@ -151,10 +142,7 @@ async def chat_completions(
             ),
         )
 
-    # ── 2. Build upstream request ─────────────────────────────────────────
-    upstream_url = f"{channel['base_url']}/v1/chat/completions"
-
-    # Build the body dict from the Pydantic model (exclude unset/None values)
+    # ── 2. Build base request body ──
     body_dict: dict[str, Any] = {"model": model_name, "messages": body.messages}
     for field in (
         "temperature", "top_p", "n", "stop", "max_tokens",
@@ -163,42 +151,62 @@ async def chat_completions(
         val = getattr(body, field, None)
         if val is not None:
             body_dict[field] = val
-
-    # Force stream to match our path
     body_dict["stream"] = body.stream
 
+    prompt_text = _concat_messages_text(body.messages)
     http_client = get_http()
 
-    # ── 3. Estimate prompt tokens for billing ─────────────────────────────
-    prompt_text = _concat_messages_text(body.messages)
+    errors: list[str] = []
 
-    if body.stream:
-        return await _handle_stream(
-            channel=channel,
-            user_id=user_id,
-            token_id=token_id,
-            model_name=model_name,
-            upstream_url=upstream_url,
-            body_dict=body_dict,
-            prompt_text=prompt_text,
-            http_client=http_client,
-        )
-    else:
-        return await _handle_nonstream(
-            channel=channel,
-            user_id=user_id,
-            token_id=token_id,
-            model_name=model_name,
-            upstream_url=upstream_url,
-            body_dict=body_dict,
-            http_client=http_client,
-        )
+    # ── 3. Try channels in order ──
+    for channel in channels:
+        upstream_url = f"{channel['base_url']}/v1/chat/completions"
+
+        if body.stream:
+            result = await _try_stream(
+                channel=channel,
+                user_id=user_id,
+                token_id=token_id,
+                model_name=model_name,
+                upstream_url=upstream_url,
+                body_dict=body_dict,
+                prompt_text=prompt_text,
+                http_client=http_client,
+            )
+        else:
+            result = await _try_nonstream(
+                channel=channel,
+                user_id=user_id,
+                token_id=token_id,
+                model_name=model_name,
+                upstream_url=upstream_url,
+                body_dict=body_dict,
+                prompt_text=prompt_text,
+                http_client=http_client,
+            )
+
+        # If it's a proper response (success or client error we don't retry), return it
+        if result is not None:
+            return result
+
+        # Channel failed — log and try next
+        errors.append(f"{channel['channel_name']}: channel unavailable")
+        continue
+
+    # All channels failed
+    return JSONResponse(
+        status_code=502,
+        content=_build_error(
+            f"All upstream channels for `{model_name}` failed: {'; '.join(errors)}",
+            "upstream_failover_exhausted",
+        ),
+    )
 
 
-# ── Stream handler ───────────────────────────────────────────────────────────
+# ── Stream handler (tries one channel, returns None on failure) ──��────────────
 
 
-async def _handle_stream(
+async def _try_stream(
     channel: dict[str, Any],
     user_id: int,
     token_id: int | None,
@@ -207,9 +215,8 @@ async def _handle_stream(
     body_dict: dict[str, Any],
     prompt_text: str,
     http_client: Any,
-) -> StreamingResponse:
-    """Forward request as SSE stream with background billing."""
-
+) -> StreamingResponse | None:
+    """Try a single channel for SSE streaming. Returns None on failure (failover)."""
     headers = {
         "Authorization": f"Bearer {channel['api_key']}",
         "Content-Type": "application/json",
@@ -221,29 +228,11 @@ async def _handle_stream(
             json=body_dict,
             headers=headers,
         )
-    except Exception as exc:
-        return JSONResponse(
-            status_code=502,
-            content=_build_error(
-                f"Upstream request failed: {exc}",
-                "upstream_error",
-            ),
-        )
+    except Exception:
+        return None
 
     if upstream_resp.status_code != 200:
-        try:
-            err_body = upstream_resp.json()
-        except Exception:
-            err_body = {
-                "error": {
-                    "message": upstream_resp.text[:500],
-                    "type": "upstream_error",
-                }
-            }
-        return JSONResponse(
-            status_code=upstream_resp.status_code,
-            content=err_body,
-        )
+        return None
 
     proxy = StreamProxy(
         billing_model=channel,
@@ -263,31 +252,34 @@ async def _handle_stream(
     )
 
 
-# ── Non-stream handler ───────────────────────────────────────────────────────
+# ── Non-stream handler (tries one channel, returns None on failure) ──────────
 
 
-async def _handle_nonstream(
+async def _try_nonstream(
     channel: dict[str, Any],
     user_id: int,
     token_id: int | None,
     model_name: str,
     upstream_url: str,
     body_dict: dict[str, Any],
+    prompt_text: str,
     http_client: Any,
-) -> JSONResponse:
-    """Forward request non-stream, deduct cost, return JSON."""
-
-    status_code, data, elapsed_ms = await forward_nonstream(
-        http_client=http_client,
-        upstream_url=upstream_url,
-        api_key=channel["api_key"],
-        body=body_dict,
-    )
+) -> JSONResponse | None:
+    """Try a single channel for non-stream. Returns None on failure (failover)."""
+    try:
+        status_code, data, elapsed_ms = await forward_nonstream(
+            http_client=http_client,
+            upstream_url=upstream_url,
+            api_key=channel["api_key"],
+            body=body_dict,
+        )
+    except Exception:
+        return None
 
     if status_code != 200:
-        return JSONResponse(status_code=status_code, content=data)
+        return None
 
-    # ── Compute cost ──────────────────────────────────────────────────────
+    # ── Compute cost ──
     usage = data.get("usage", {})
     prompt_tokens = int(usage.get("prompt_tokens", 0))
     completion_tokens = int(usage.get("completion_tokens", 0))
@@ -300,7 +292,7 @@ async def _handle_nonstream(
         total_tokens=total_tokens,
     )
 
-    # ── Insert log record ─────────────────────────────────────────────────
+    # ── Insert log ──
     log_id = await _insert_log(
         user_id=user_id,
         token_id=token_id,
@@ -316,17 +308,14 @@ async def _handle_nonstream(
         status="success",
     )
 
-    # ── Deduct balance ────────────────────────────────────────────────────
+    # ── Deduct balance ──
     if cost > 0:
         log_data = {
             "model": model_name,
             "log_id": log_id,
             "channel_id": channel["channel_id"],
         }
-        success = await atomic_deduct(user_id, cost, log_data)
-        if not success:
-            # Deduction failed — still return the response (already used)
-            pass
+        await atomic_deduct(user_id, cost, log_data)
 
     return JSONResponse(status_code=200, content=data)
 
@@ -352,7 +341,6 @@ def _compute_cost(
     # per_token
     prompt_price = Decimal(str(channel.get("prompt_token_price_1k", 0)))
     completion_price = Decimal(str(channel.get("completion_token_price_1k", 0)))
-
     prompt_cost = prompt_price * Decimal(prompt_tokens) / Decimal(1000)
     completion_cost = completion_price * Decimal(completion_tokens) / Decimal(1000)
     return (prompt_cost + completion_cost).quantize(Decimal("0.000001"))

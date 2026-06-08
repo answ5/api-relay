@@ -1,4 +1,4 @@
-"""Admin API — Online model testing (no billing)."""
+"""Admin API — Online model testing (no billing, multi-channel failover)."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from app.core.routes import require_admin
 from app.http_client import get_http
 from app.relay.proxy import forward_nonstream
-from app.services.channel_service import select_channel
+from app.services.channel_service import select_channels_for_failover
 
 router = APIRouter(prefix="/chat", tags=["Admin Test"])
 
@@ -33,16 +33,14 @@ async def chat_test(
     body: TestRequest,
     _: Any = Depends(require_admin),
 ):
-    """Forward a chat completion request as an admin test (no billing).
+    """Forward a chat completion as admin test with multi-channel failover.
 
-    Selects an upstream channel for the given model and proxies
-    the request.  No cost is deducted from any user's balance.
+    Tries all candidate channels (sorted by price ASC).  No billing.
     """
     model_name = body.model
 
-    # ── 1. Select upstream channel ──
-    channel = await select_channel(model_name, strategy="weighted_random")
-    if channel is None:
+    channels = await select_channels_for_failover(model_name)
+    if not channels:
         raise HTTPException(
             status_code=400,
             detail={
@@ -53,9 +51,6 @@ async def chat_test(
             },
         )
 
-    # ── 2. Build upstream request ──
-    upstream_url = f"{channel['base_url']}/v1/chat/completions"
-
     body_dict: dict[str, Any] = {"model": model_name, "messages": body.messages}
     if body.temperature is not None:
         body_dict["temperature"] = body.temperature
@@ -63,20 +58,40 @@ async def chat_test(
         body_dict["max_tokens"] = body.max_tokens
 
     http_client = get_http()
+    errors: list[str] = []
 
-    status_code, data, elapsed_ms = await forward_nonstream(
-        http_client=http_client,
-        upstream_url=upstream_url,
-        api_key=channel["api_key"],
-        body=body_dict,
+    for channel in channels:
+        upstream_url = f"{channel['base_url']}/v1/chat/completions"
+        try:
+            status_code, data, elapsed_ms = await forward_nonstream(
+                http_client=http_client,
+                upstream_url=upstream_url,
+                api_key=channel["api_key"],
+                body=body_dict,
+            )
+        except Exception as exc:
+            errors.append(f"{channel['channel_name']}: {exc}")
+            continue
+
+        if status_code != 200:
+            errors.append(f"{channel['channel_name']}: HTTP {status_code}")
+            continue
+
+        return {
+            "model": model_name,
+            "channel": channel["channel_name"],
+            "choices": data.get("choices", []),
+            "usage": data.get("usage", {}),
+            "elapsed_ms": elapsed_ms,
+        }
+
+    # All channels failed
+    raise HTTPException(
+        status_code=502,
+        detail={
+            "error": {
+                "message": f"All channels for `{model_name}` failed: {'; '.join(errors)}",
+                "type": "upstream_failover_exhausted",
+            }
+        },
     )
-
-    if status_code != 200:
-        raise HTTPException(status_code=status_code, detail=data)
-
-    return {
-        "model": model_name,
-        "choices": data.get("choices", []),
-        "usage": data.get("usage", {}),
-        "elapsed_ms": elapsed_ms,
-    }
