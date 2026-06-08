@@ -8,7 +8,7 @@ server:
   debug: false
 
 database:
-  url: "mysql+aiomysql://relay:password@localhost:3306/relay?charset=utf8mb4"
+  url: "mysql+aiomysql://relay:***@localhost:3306/relay?charset=utf8mb4"
   pool_size: 10
   max_overflow: 20
 
@@ -41,3 +41,39 @@ logging:
 rate_limiter:
   default_rate_per_minute: 100
   redis_prefix: "ratelimit"
+
+# ============================
+# 插件配置
+# ============================
+plugins:
+  enabled:
+    - payment_manual
+    - payment_epay
+    - payment_stripe
+    - cards
+    - subscription
+    - coupon
+    - ticket
+    - moderation
+    - channel_lb
+    - rate_limit_tier
+    - finance_report
+  disabled: []
+  settings:
+    payment_epay:
+      epay_api_url: ""
+      epay_app_id: ""
+      epay_app_key: ""
+    payment_stripe:
+      stripe_secret_key: ""
+      stripe_webhook_secret: ""
+      stripe_currency: "usd"
+    subscription:
+      auto_renew_grace_hours: 24
+      free_tier_quota: 100000
+    rate_limit_tier:
+      rate_limit_default_rpm: 60
+      rate_limit_admin_rpm: 1000
+      rate_limit_vip_rpm: 300
+    moderation:
+      moderation_enabled: 1

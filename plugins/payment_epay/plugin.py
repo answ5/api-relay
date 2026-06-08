@@ -1,0 +1,37 @@
+"""
+Plugin manifest — payment_epay (易支付)
+
+Provides EPay (Alipay / WeChat QR) payment integration.
+Depends on payment_manual for order + confirmation.
+"""
+
+from app.plugin.base import PluginBase, PluginManifest
+from app.plugin.context import PluginContext
+
+
+class Plugin(PluginBase):
+    """易支付插件 — 支付宝 / 微信扫码支付。"""
+
+    manifest = PluginManifest(
+        name="payment_epay",
+        version="1.0.0",
+        description="易支付接入：支付宝 / 微信扫码",
+        dependencies=["payment_manual"],
+    )
+
+    async def on_load(self, ctx: PluginContext) -> None:
+        from . import api
+        ctx.register_router(api.router)
+
+        ctx.register_config_defaults("epay_api_url", "")
+        ctx.register_config_defaults("epay_app_id", "")
+        ctx.register_config_defaults("epay_app_key", "")
+
+        # Register service so payment_manual can delegate to us
+        from .service import create_epay_order
+        ctx.register_service("epay_create", create_epay_order)
+
+        ctx.logger.info("✅ payment_epay loaded: 支持支付宝 / 微信支付")
+
+    async def on_unload(self) -> None:
+        pass

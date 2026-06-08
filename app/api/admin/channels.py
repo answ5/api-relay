@@ -202,6 +202,100 @@ async def update_channel(
     return {"data": data}
 
 
+# ── Request models ──
+
+
+class FetchFromUrlRequest(BaseModel):
+    base_url: str
+    api_key: str
+
+
+# ── Endpoints ──
+
+
+@router.post("/fetch-from-url")
+async def fetch_models_from_url(
+    body: FetchFromUrlRequest,
+    _: Any = Depends(require_admin),
+) -> dict[str, Any]:
+    \"\"\"Fetch available models from an upstream URL (for testing before saving).\"\"\"
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(
+                f"{body.base_url.rstrip('/')}/v1/models",
+                headers={"Authorization": f"Bearer {body.api_key}"},
+            )
+            if resp.status_code != 200:
+                return {
+                    "data": {"models": [], "error": f"上游返回 {resp.status_code}: {resp.text[:200]}"}
+                }
+            data = resp.json()
+            models = [m["id"] for m in data.get("data", []) if m.get("id")]
+            return {"data": {"models": sorted(models), "total": len(models)}}
+    except httpx.ConnectError as e:
+        return {"data": {"models": [], "error": f"连接失败: {e}"}}
+    except httpx.TimeoutException as e:
+        return {"data": {"models": [], "error": f"超时: {e}"}}
+    except Exception as e:
+        return {"data": {"models": [], "error": str(e)}}
+
+
+@router.post("/{channel_id}/fetch-models")
+async def fetch_models(
+    channel_id: int,
+    _: Any = Depends(require_admin),
+) -> dict[str, Any]:
+    \"\"\"Fetch available models from an existing channel.\"\"\"
+    async with get_session_sync()() as session:
+        row = await session.execute(
+            text("SELECT id, name, base_url, api_key FROM channels WHERE id = :id"),
+            {"id": channel_id},
+        )
+        channel = row.fetchone()
+
+    if not channel:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=_error(f"Channel {channel_id} not found.", "not_found"),
+        )
+
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(
+                f"{channel.base_url.rstrip('/')}/v1/models",
+                headers={"Authorization": f"Bearer {channel.api_key}"},
+            )
+            if resp.status_code != 200:
+                return {
+                    "data": {
+                        "channel_id": channel_id,
+                        "name": channel.name,
+                        "models": [],
+                        "error": f"上游返回 {resp.status_code}: {resp.text[:200]}",
+                    }
+                }
+            data = resp.json()
+            models = [m["id"] for m in data.get("data", []) if m.get("id")]
+            return {
+                "data": {
+                    "channel_id": channel_id,
+                    "name": channel.name,
+                    "models": sorted(models),
+                    "total": len(models),
+                }
+            }
+    except httpx.ConnectError as e:
+        return {"data": {"channel_id": channel_id, "name": channel.name, "models": [], "error": f"连接失败: {e}"}}
+    except httpx.TimeoutException as e:
+        return {"data": {"channel_id": channel_id, "name": channel.name, "models": [], "error": f"超时: {e}"}}
+    except Exception as e:
+        return {"data": {"channel_id": channel_id, "name": channel.name, "models": [], "error": str(e)}}
+
+
 @router.post("/{channel_id}/health-check")
 async def health_check_channel(
     channel_id: int,
