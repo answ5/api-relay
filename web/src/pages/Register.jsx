@@ -32,28 +32,66 @@ export default function Register() {
   return (
     <div className="login-page">
       <div className="login-box">
-        <h1>API <span>Relay</span> 注册</h1>
+        <h1>
+          <span className="logo-icon-sm">⚡</span>
+          API <span>Relay</span> 注册
+        </h1>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>用户名</label>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoFocus
+              placeholder="请输入用户名"
+            />
           </div>
           <div className="form-group">
             <label>邮箱（选填）</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+            />
           </div>
           <div className="form-group">
             <label>密码</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="至少 6 位"
+            />
           </div>
-          {error && <p style={{ color: 'var(--danger)', fontSize: '.85rem', marginBottom: 12 }}>{error}</p>}
-          {success && <p style={{ color: 'var(--success)', fontSize: '.85rem', marginBottom: 12 }}>{success}</p>}
-          <button className="btn btn-primary" style={{ width: '100%', padding: '10px', fontSize: '1rem' }} disabled={loading}>
+          {error && <p style={{
+            background: 'var(--danger-light)',
+            color: 'var(--danger)',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '.85rem',
+            marginBottom: 14,
+            border: '1px solid #fecaca',
+          }}>{error}</p>}
+          {success && <p style={{
+            background: '#f0fdf4',
+            color: 'var(--success)',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '.85rem',
+            marginBottom: 14,
+            border: '1px solid #bbf7d0',
+          }}>{success}</p>}
+          <button
+            className="btn btn-primary btn-lg"
+            style={{ width: '100%', padding: '11px' }}
+            disabled={loading}
+          >
             {loading ? '注册中...' : '注册'}
           </button>
         </form>
-        <p style={{ textAlign: 'center', marginTop: 16, fontSize: '.85rem', color: '#888' }}>
-          已有账号？<Link to="/login" style={{ color: 'var(--primary)' }}>去登录</Link>
+        <p style={{ textAlign: 'center', marginTop: 18, fontSize: '.85rem', color: 'var(--text2)' }}>
+          已有账号？<Link to="/login">去登录</Link>
         </p>
       </div>
     </div>

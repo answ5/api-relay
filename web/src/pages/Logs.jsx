@@ -43,7 +43,9 @@ export default function Logs() {
   return (
     <div>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
-      <h2 style={{ fontWeight: 600, marginBottom: 16 }}>📋 请求日志</h2>
+      <div className="page-header">
+        <h2>📋 请求日志</h2>
+      </div>
       <div className="card">
         <div className="filter-bar">
           <input placeholder="用户 ID" value={filters.userId} onChange={(e) => setFilters({ ...filters, userId: e.target.value })} style={{ width: 100 }} />
@@ -52,7 +54,7 @@ export default function Logs() {
           <input type="date" value={filters.dateTo} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
           <button className="btn btn-ghost btn-sm" onClick={() => { setPage(1); load(); }}>搜索</button>
           <button className="btn btn-ghost btn-sm" onClick={() => { setFilters({ userId: '', model: '', dateFrom: '', dateTo: '' }); setPage(1); }}>清除</button>
-          <span style={{ fontSize: '.85rem', color: 'var(--text2)', marginLeft: 'auto' }}>共 {total} 条</span>
+          <span className="filter-count">共 {total} 条</span>
         </div>
         {loading ? <div className="loading">加载中...</div> : (
           <div className="table-wrap">
@@ -65,13 +67,13 @@ export default function Logs() {
                   <tr key={l.id}>
                     <td>{l.id}</td>
                     <td>#{l.user_id}</td>
-                    <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={l.model_name}>{l.model_name}</td>
+                    <td className="cell-model-name" title={l.model_name}>{l.model_name}</td>
                     <td>{(l.total_tokens || 0).toLocaleString()}</td>
                     <td>{parseFloat(l.user_cost || 0).toFixed(6)}</td>
                     <td>{l.response_ms}ms</td>
-                    <td>{l.is_stream ? <span className="badge badge-success">流式</span> : <span className="badge badge-error">非流</span>}</td>
+                    <td>{l.is_stream ? <span className="badge badge-stream">流式</span> : <span className="badge badge-error">非流</span>}</td>
                     <td><span className={`badge ${l.status === 'success' ? 'badge-success' : 'badge-error'}`}>{l.status}</span></td>
-                    <td style={{ fontSize: '.8rem', color: 'var(--text2)' }}>{l.created_at?.slice(0, 19)}</td>
+                    <td className="cell-time">{l.created_at?.slice(0, 19)}</td>
                     <td><button className="btn btn-ghost btn-sm" onClick={() => handlePayload(l.id)}>Payload</button></td>
                   </tr>
                 ))}
@@ -91,15 +93,15 @@ export default function Logs() {
 
       {payloadModal && (
         <div className="modal-overlay" onClick={() => setPayloadModal(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ width: 700 }}>
+          <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header"><span>请求详情 - #{payloadModal.logId}</span><button onClick={() => setPayloadModal(null)}>&times;</button></div>
-            <div className="modal-body" style={{ maxHeight: '60vh', overflow: 'auto' }}>
-              <h4 style={{ marginBottom: 8, fontSize: '.9rem' }}>请求体</h4>
-              <pre style={{ background: '#f5f6fa', padding: 12, borderRadius: 4, fontSize: '.8rem', overflow: 'auto', maxHeight: 300, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+            <div className="modal-body modal-body-scroll">
+              <h4 className="modal-subtitle">请求体</h4>
+              <pre className="pre-box">
                 {payloadModal.request_payload ? JSON.stringify(payloadModal.request_payload, null, 2) : '暂无'}
               </pre>
-              <h4 style={{ margin: '12px 0 8px', fontSize: '.9rem' }}>响应体</h4>
-              <pre style={{ background: '#f5f6fa', padding: 12, borderRadius: 4, fontSize: '.8rem', overflow: 'auto', maxHeight: 300, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+              <h4 className="modal-subtitle" style={{ marginTop: 12 }}>响应体</h4>
+              <pre className="pre-box">
                 {payloadModal.response_payload ? JSON.stringify(payloadModal.response_payload, null, 2) : '暂无'}
               </pre>
             </div>

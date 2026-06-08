@@ -60,8 +60,8 @@ export default function Tokens() {
   return (
     <div>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ fontWeight: 600 }}>🔑 Token 管理</h2>
+      <div className="page-header">
+        <h2>🔑 Token 管理</h2>
         <button className="btn btn-primary" onClick={() => setModal({ type: 'create' })}>+ 创建 Token</button>
       </div>
       <div className="card">
@@ -69,7 +69,7 @@ export default function Tokens() {
           <input placeholder="按用户 ID 筛选" value={userId} onChange={(e) => setUserId(e.target.value)} />
           <button className="btn btn-ghost btn-sm" onClick={() => { setPage(1); load(); }}>筛选</button>
           {userId && <button className="btn btn-ghost btn-sm" onClick={() => { setUserId(''); setPage(1); load(); }}>清除</button>}
-          <span style={{ fontSize: '.85rem', color: 'var(--text2)', marginLeft: 'auto' }}>共 {total} 个 Token</span>
+          <span className="filter-count">共 {total} 个 Token</span>
         </div>
         {loading ? <div className="loading">加载中...</div> : (
           <div className="table-wrap">
@@ -81,13 +81,13 @@ export default function Tokens() {
                 {tokens.map((t) => (
                   <tr key={t.id}>
                     <td>{t.id}</td>
-                    <td style={{ fontWeight: 500 }}>{t.name || '-'}</td>
+                    <td className="cell-name">{t.name || '-'}</td>
                     <td>{users.find((u) => u.id === t.user_id)?.username || `#${t.user_id}`}</td>
-                    <td><code style={{ background: '#f0f0f5', padding: '1px 6px', borderRadius: 3, fontSize: '.8rem' }}>sk-{t.key_prefix}...</code></td>
+                    <td><code>sk-{t.key_prefix}...</code></td>
                     <td><span className="tag tag-active">{t.group_name}</span></td>
                     <td>{t.rate_limit_per_minute}/min</td>
                     <td><span className={`tag ${t.status === 1 ? 'tag-active' : 'tag-inactive'}`}>{t.status === 1 ? '启用' : '禁用'}</span></td>
-                    <td style={{ fontSize: '.8rem', color: 'var(--text2)' }}>{t.last_used_at?.slice(0, 19) || '从未使用'}</td>
+                    <td className="cell-time">{t.last_used_at?.slice(0, 19) || '从未使用'}</td>
                     <td>
                       <button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'edit', data: t })}>编辑</button>{' '}
                       <button className="btn btn-danger btn-sm" onClick={() => handleDelete(t.id)}>删除</button>
@@ -155,7 +155,7 @@ function TokenCreateForm({ users, onSave, onClose }) {
             <div className="form-group"><label>额度上限</label><input type="number" step="0.0001" value={form.balance_limit} onChange={(e) => update('balance_limit', parseFloat(e.target.value) || 0)} /></div>
             <div className="form-group"><label>模型限制（留空=全部）</label><input placeholder="gpt-4,claude-3" value={form.models} onChange={(e) => update('models', e.target.value)} /></div>
           </div>
-          <p style={{ fontSize: '.8rem', color: 'var(--warning)', marginTop: 4 }}>⚠️ 创建后密钥只显示一次，请立即保存</p>
+          <div className="form-notice">⚠️ 创建后密钥只显示一次，请立即保存</div>
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn-ghost" onClick={onClose}>取消</button>
@@ -189,7 +189,7 @@ function TokenEditForm({ token, onSave, onClose }) {
       <div className="modal-header"><span>编辑 Token #{token.id}</span><button onClick={onClose}>&times;</button></div>
       <form onSubmit={handleSubmit}>
         <div className="modal-body">
-          <p style={{ marginBottom: 12, fontSize: '.85rem', color: 'var(--text2)' }}>Key 前缀: <code style={{ background: '#f0f0f5', padding: '1px 6px', borderRadius: 3 }}>sk-{token.key_prefix}...</code></p>
+          <p className="form-hint">Key 前缀: <code>sk-{token.key_prefix}...</code></p>
           <div className="form-row">
             <div className="form-group"><label>名称</label><input value={form.name} onChange={(e) => update('name', e.target.value)} /></div>
             <div className="form-group"><label>分组</label><select value={form.group_name} onChange={(e) => update('group_name', e.target.value)}><option value="default">default</option><option value="vip">vip</option><option value="pro">pro</option></select></div>

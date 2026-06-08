@@ -26,7 +26,9 @@ export default function Transactions() {
 
   return (
     <div>
-      <h2 style={{ fontWeight: 600, marginBottom: 16 }}>💳 交易记录</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h2>💳 交易记录</h2>
+      </div>
       <div className="card">
         <div className="filter-bar">
           <input placeholder="用户 ID" value={filters.userId} onChange={(e) => setFilters({ ...filters, userId: e.target.value })} style={{ width: 100 }} />
@@ -45,7 +47,7 @@ export default function Transactions() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>ID</th><th>��户</th><th>类型</th><th>金额</th><th>余额变动后</th><th>备注</th><th>日志 ID</th><th>时间</th></tr>
+                <tr><th>ID</th><th>用户</th><th>类型</th><th>金额</th><th>余额变动后</th><th>备注</th><th>日志 ID</th><th>时间</th></tr>
               </thead>
               <tbody>
                 {txns.map((t) => (
@@ -57,9 +59,9 @@ export default function Transactions() {
                       {parseFloat(t.amount) >= 0 ? '+' : ''}{parseFloat(t.amount || 0).toFixed(4)}
                     </td>
                     <td>{t.balance_after != null ? parseFloat(t.balance_after).toFixed(4) : '-'}</td>
-                    <td style={{ fontSize: '.8rem', color: 'var(--text2)', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.note || '-'}</td>
+                    <td className="cell-note">{t.note || '-'}</td>
                     <td>{t.log_id ? `#${t.log_id}` : '-'}</td>
-                    <td style={{ fontSize: '.8rem', color: 'var(--text2)' }}>{t.created_at?.slice(0, 19)}</td>
+                    <td className="cell-time">{t.created_at?.slice(0, 19)}</td>
                   </tr>
                 ))}
                 {txns.length === 0 && <tr><td colSpan={8} className="empty">暂无数据</td></tr>}

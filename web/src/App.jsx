@@ -40,6 +40,25 @@ function UserRoute({ auth, children }) {
   return children;
 }
 
+function AppLoading() {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', gap: 16,
+      background: '#f0f2f6',
+    }}>
+      <div style={{
+        width: 36, height: 36,
+        border: '3px solid #e2e8f0',
+        borderTopColor: '#6366f1',
+        borderRadius: '50%',
+        animation: 'spin .6s linear infinite',
+      }} />
+      <span style={{ color: '#64748b', fontSize: '.9rem' }}>加载中...</span>
+    </div>
+  );
+}
+
 export default function App() {
   const [auth, setAuth] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -53,17 +72,7 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Loading state
-  if (loading) {
-    return (
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', color: '#999', fontSize: '1rem',
-      }}>
-        加载中...
-      </div>
-    );
-  }
+  if (loading) return <AppLoading />;
 
   const isAdmin = auth?.role === 'admin' || auth?.role === 'super_admin';
 

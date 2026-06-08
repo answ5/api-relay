@@ -53,20 +53,17 @@ export default function UserBills() {
             </thead>
             <tbody>
               {txns.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: '#bbb' }}>暂无记录</td></tr>
+                <tr><td colSpan={6} className="user-empty-row">暂无记录</td></tr>
               ) : txns.map((t) => (
                 <tr key={t.id}>
-                  <td style={{ fontSize: '.8rem', color: '#999' }}>{t.id}</td>
-                  <td><span style={{
-                    color: t.type === 'consume' ? '#cf1322' : '#52c41a',
-                    fontWeight: 600,
-                  }}>{typeLabel(t.type)}</span></td>
-                  <td style={{ color: t.amount < 0 ? '#cf1322' : '#52c41a' }}>
+                  <td className="user-muted">{t.id}</td>
+                  <td><span className={`user-tag-${t.type === 'consume' ? 'danger' : 'success'}`}>{typeLabel(t.type)}</span></td>
+                  <td className={t.amount < 0 ? 'user-cost-down' : 'user-cost-up'}>
                     {formatCost(t.amount)}
                   </td>
                   <td>¥{parseFloat(t.balance_after || 0).toFixed(4)}</td>
-                  <td style={{ color: '#999', fontSize: '.85rem' }}>{t.note || '-'}</td>
-                  <td style={{ fontSize: '.8rem', color: '#999' }}>{formatTime(t.created_at)}</td>
+                  <td className="user-muted">{t.note || '-'}</td>
+                  <td className="user-muted">{formatTime(t.created_at)}</td>
                 </tr>
               ))}
             </tbody>

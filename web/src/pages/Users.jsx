@@ -7,7 +7,7 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState('');
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // null | { type: 'create'|'edit'|'balance', data }
+  const [modal, setModal] = useState(null);
   const [toast, setToast] = useState(null);
 
   const size = 20;
@@ -54,8 +54,8 @@ export default function Users() {
     <div>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ fontWeight: 600 }}>👥 用户管理</h2>
+      <div className="page-header">
+        <h2>👥 用户管理</h2>
         <button className="btn btn-primary" onClick={() => setModal({ type: 'create' })}>+ 创建用户</button>
       </div>
 
@@ -63,7 +63,7 @@ export default function Users() {
         <div className="filter-bar">
           <input placeholder="搜索用户名/邮箱/ID" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
           <button className="btn btn-ghost btn-sm" onClick={handleSearch}>搜索</button>
-          <span style={{ fontSize: '.85rem', color: 'var(--text2)', marginLeft: 'auto' }}>共 {total} 个用户</span>
+          <span className="filter-count">共 {total} 个用户</span>
         </div>
         {loading ? <div className="loading">加载中...</div> : (
           <div className="table-wrap">
@@ -75,12 +75,12 @@ export default function Users() {
                 {users.map((u) => (
                   <tr key={u.id}>
                     <td>{u.id}</td>
-                    <td style={{ fontWeight: 500 }}>{u.username}</td>
-                    <td style={{ color: 'var(--text2)' }}>{u.email || '-'}</td>
+                    <td className="cell-name">{u.username}</td>
+                    <td className="cell-time">{u.email || '-'}</td>
                     <td><span className={`tag ${u.role === 'admin' || u.role === 'super_admin' ? 'tag-admin' : 'tag-user'}`}>{u.role}</span></td>
-                    <td style={{ fontWeight: 500 }}>{parseFloat(u.balance || 0).toFixed(4)}</td>
+                    <td className="cell-name">{parseFloat(u.balance || 0).toFixed(4)}</td>
                     <td><span className={`tag ${u.status === 1 ? 'tag-active' : 'tag-inactive'}`}>{u.status === 1 ? '启用' : '禁用'}</span></td>
-                    <td style={{ fontSize: '.8rem', color: 'var(--text2)' }}>{u.created_at?.slice(0, 19)}</td>
+                    <td className="cell-time">{u.created_at?.slice(0, 19)}</td>
                     <td>
                       <button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'edit', data: u })}>编辑</button>{' '}
                       <button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'balance', data: u })}>余额</button>

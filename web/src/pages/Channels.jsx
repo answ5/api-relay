@@ -54,12 +54,12 @@ export default function Channels() {
   return (
     <div>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ fontWeight: 600 }}>🔗 渠道管理</h2>
+      <div className="page-header">
+        <h2>🔗 渠道管理</h2>
         <button className="btn btn-primary" onClick={() => setModal({ type: 'create' })}>+ 添加渠道</button>
       </div>
       <div className="card">
-        <div style={{ fontSize: '.85rem', color: 'var(--text2)', marginBottom: 12 }}>共 {total} 个渠道</div>
+        <div className="filter-count" style={{ marginBottom: 12, marginLeft: 0 }}>共 {total} 个渠道</div>
         {loading ? <div className="loading">加载中...</div> : (
           <div className="table-wrap">
             <table>
@@ -70,12 +70,12 @@ export default function Channels() {
                 {channels.map((c) => (
                   <tr key={c.id}>
                     <td>{c.id}</td>
-                    <td style={{ fontWeight: 500 }}>{c.name}</td>
-                    <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.base_url}>{c.base_url}</td>
+                    <td className="cell-name">{c.name}</td>
+                    <td className="cell-url" title={c.base_url}>{c.base_url}</td>
                     <td>{c.weight}</td>
                     <td>{c.priority}</td>
-                    <td style={{ fontSize: '.8rem', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.models || '全部'}</td>
-                    <td>{c.circuit_breaker ? (c.circuit_breaker.open ? <span className="badge badge-error">断开</span> : <span className="badge badge-success">正常</span>) : <span style={{ color: 'var(--text2)', fontSize: '.8rem' }}>-</span>}</td>
+                    <td className="cell-models">{c.models || '全部'}</td>
+                    <td>{c.circuit_breaker ? (c.circuit_breaker.open ? <span className="badge badge-error">断开</span> : <span className="badge badge-success">正常</span>) : <span className="cell-time">-</span>}</td>
                     <td><span className={`tag ${c.status === 1 ? 'tag-active' : 'tag-inactive'}`}>{c.status === 1 ? '启用' : '禁用'}</span></td>
                     <td>
                       <button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'edit', data: c })}>编辑</button>{' '}

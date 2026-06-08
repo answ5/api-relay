@@ -47,12 +47,12 @@ export default function ModelPricing() {
   return (
     <div>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ fontWeight: 600 }}>💰 模型定价</h2>
+      <div className="page-header">
+        <h2>💰 模型定价</h2>
         <button className="btn btn-primary" onClick={() => setModal({ type: 'create' })}>+ 添加定价</button>
       </div>
       <div className="card">
-        <div style={{ fontSize: '.85rem', color: 'var(--text2)', marginBottom: 12 }}>共 {total} 条定价规则</div>
+        <div className="filter-count" style={{ marginBottom: 12, marginLeft: 0 }}>共 {total} 条定价规则</div>
         {loading ? <div className="loading">加载中...</div> : (
           <div className="table-wrap">
             <table>
@@ -65,14 +65,14 @@ export default function ModelPricing() {
                   return (
                     <tr key={p.id}>
                       <td>{p.id}</td>
-                      <td style={{ fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.model_name}>{p.model_name}</td>
-                      <td style={{ fontSize: '.8rem' }}>{ch?.name || `#${p.channel_id}`}</td>
+                      <td className="cell-name cell-model-name" title={p.model_name}>{p.model_name}</td>
+                      <td className="cell-time">{ch?.name || `#${p.channel_id}`}</td>
                       <td><span className="tag tag-active">{p.billing_method}</span></td>
                       <td>{parseFloat(p.prompt_token_price_1k || 0).toFixed(6)}</td>
                       <td>{parseFloat(p.completion_token_price_1k || 0).toFixed(6)}</td>
                       <td>{parseFloat(p.request_price || 0).toFixed(6)}</td>
                       <td>{p.image_price_per_generation != null ? parseFloat(p.image_price_per_generation).toFixed(6) : '-'}</td>
-                      <td style={{ fontSize: '.8rem' }}>{p.groups || '全部'}</td>
+                      <td className="cell-time">{p.groups || '全部'}</td>
                       <td><span className={`tag ${p.status === 1 ? 'tag-active' : 'tag-inactive'}`}>{p.status === 1 ? '启用' : '禁用'}</span></td>
                       <td><button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'edit', data: p })}>编辑</button></td>
                     </tr>

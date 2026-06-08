@@ -21,6 +21,15 @@ export default function UserDashboard() {
   const summary = stats?.summary || {};
   const modelUsage = stats?.model_usage || [];
 
+  const statItems = [
+    { label: '今日请求', value: summary.today_requests || 0 },
+    { label: '今日消耗 Tokens', value: (summary.today_tokens || 0).toLocaleString() },
+    { label: '今日消费', value: `¥${(summary.today_cost || 0).toFixed(4)}` },
+    { label: '成功率', value: `${summary.success_rate || 100}%` },
+    { label: '有效 API Keys', value: summary.active_tokens || 0 },
+    { label: '累计 Tokens', value: (summary.total_tokens_all_time || 0).toLocaleString() },
+  ];
+
   return (
     <div>
       <h2 className="page-title">我的概览</h2>
@@ -32,21 +41,14 @@ export default function UserDashboard() {
         </div>
         <div style={{ textAlign: 'right' }}>
           <div className="user-balance-label">累计消费</div>
-          <div className="" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+          <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>
             ¥{parseFloat(summary.total_spent || 0).toFixed(4)}
           </div>
         </div>
       </div>
 
       <div className="user-stats-grid">
-        {[
-          { label: '今日请求', value: summary.today_requests || 0 },
-          { label: '今日消耗 Tokens', value: (summary.today_tokens || 0).toLocaleString() },
-          { label: '今日消费', value: `¥${(summary.today_cost || 0).toFixed(4)}` },
-          { label: '成功率', value: `${summary.success_rate || 100}%` },
-          { label: '有效 API Keys', value: summary.active_tokens || 0 },
-          { label: '累计 Tokens', value: (summary.total_tokens_all_time || 0).toLocaleString() },
-        ].map((item, i) => (
+        {statItems.map((item, i) => (
           <div key={i} className="user-stat-card">
             <div className="stat-label">{item.label}</div>
             <div className="stat-value">{item.value}</div>
