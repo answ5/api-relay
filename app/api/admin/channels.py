@@ -218,7 +218,7 @@ async def fetch_models_from_url(
     body: FetchFromUrlRequest,
     _: Any = Depends(require_admin),
 ) -> dict[str, Any]:
-    \"\"\"Fetch available models from an upstream URL (for testing before saving).\"\"\"
+    """Fetch available models from an upstream URL (for testing before saving)."""
     import httpx
 
     try:
@@ -247,7 +247,7 @@ async def fetch_models(
     channel_id: int,
     _: Any = Depends(require_admin),
 ) -> dict[str, Any]:
-    \"\"\"Fetch available models from an existing channel.\"\"\"
+    """Fetch available models from an existing channel."""
     async with get_session_sync()() as session:
         row = await session.execute(
             text("SELECT id, name, base_url, api_key FROM channels WHERE id = :id"),
