@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { api, listModelPricing } from '../api';
+import api, { listModelPricing } from '../api';
 
 export default function TestChat() {
   const [models, setModels] = useState([]);
