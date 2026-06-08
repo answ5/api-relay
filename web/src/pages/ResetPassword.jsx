@@ -15,15 +15,16 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!token) { setError('请输入重置令牌'); return; }
+    const cleanedToken = token.trim();
+    if (!cleanedToken) { setError('请输入重置令牌'); return; }
     if (password.length < 6) { setError('密码长度至少 6 位'); return; }
     if (password !== confirm) { setError('两次密码输入不一致'); return; }
     setLoading(true);
     try {
-      await resetPassword({ token, password });
+      await resetPassword({ token: cleanedToken, password });
       setDone(true);
     } catch (err) {
-      setError(err.response?.data?.detail?.error?.message || '重置失败');
+      setError(err.response?.data?.detail?.error?.message || '重置失败，令牌可能已过期或用过，请重新获取');
     } finally {
       setLoading(false);
     }
@@ -54,7 +55,7 @@ export default function ResetPassword() {
 
   return (
     <div className="login-page">
-      <div className="login-box">
+      <div className="login-box" style={{ maxWidth: 440 }}>
         <h1>
           <span className="logo-icon-sm">🔄</span>
           重置密码
@@ -65,9 +66,13 @@ export default function ResetPassword() {
             <input
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              placeholder="��忘记密码页面获取的令牌"
+              placeholder="粘贴从忘记密码页面获取的令牌"
               autoFocus
+              style={{ fontFamily: 'monospace', fontSize: '.82rem' }}
             />
+            <p style={{ fontSize: '.75rem', color: 'var(--text2)', marginTop: 4 }}>
+              请完整复制令牌，不要包含空格
+            </p>
           </div>
           <div className="form-group">
             <label>新密码</label>
