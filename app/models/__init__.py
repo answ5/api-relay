@@ -128,3 +128,14 @@ class RequestPayload(Base):
     request_body = Column(LargeBinary, nullable=True)
     response_body = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+
+
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String(128), nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Integer, default=0)  # 0=unused, 1=used
+    created_at = Column(DateTime, server_default=func.now())

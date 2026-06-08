@@ -30,6 +30,9 @@ export function login(username, password) {
 export function me() { return api.get('/auth/me'); }
 export function logout() { return api.post('/auth/logout'); }
 
+export function forgotPassword(data) { return api.post('/auth/forgot-password', data); }
+export function resetPassword(data) { return api.post('/auth/reset-password', data); }
+
 // ── User-facing API (uses auth JWT, not API key) ──
 const userApi = axios.create({
   baseURL: '/relay/api/user',
@@ -69,6 +72,7 @@ export function listUsers(params) { return api.get('/users', { params }); }
 export function createUser(data) { return api.post('/users', data); }
 export function updateUser(id, data) { return api.put(`/users/${id}`, data); }
 export function adjustBalance(id, data) { return api.post(`/users/${id}/balance`, data); }
+export function adminResetUserPassword(id, data) { return api.put(`/users/${id}/password`, data); }
 
 export function listTokens(params) { return api.get('/tokens', { params }); }
 export function createToken(data) { return api.post('/tokens', data); }

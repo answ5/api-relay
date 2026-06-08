@@ -72,6 +72,8 @@ export default function Login({ onLogin }) {
         </form>
         <p style={{ textAlign: 'center', marginTop: 18, fontSize: '.85rem', color: 'var(--text2)' }}>
           没有账号？<Link to="/register">立即注册</Link>
+          <span style={{ margin: '0 8px', color: 'var(--border)' }}>|</span>
+          <Link to="/forgot-password">忘记密码</Link>
         </p>
       </div>
     </div>

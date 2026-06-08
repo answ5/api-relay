@@ -9,11 +9,13 @@ from argon2.exceptions import VerificationError
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, field_validator
 from sqlalchemy import select, text
+from datetime import datetime, timedelta
+import secrets
 
 from app.core.jwt import create_admin_token
 from app.core.routes import require_admin
 from app.database import get_session_sync
-from app.models import User
+from app.models import User, PasswordReset
 
 router = APIRouter(prefix="/auth", tags=["Admin Auth"])
 
@@ -165,6 +167,113 @@ async def register(body: RegisterRequest) -> dict:
         "role": user.role,
         "message": "注册成功",
     }
+
+
+# ── Password reset (self-service) ────────────────────────────────────────────
+
+
+class ForgotPasswordRequest(BaseModel):
+    username: str = ""
+    email: str = ""
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("密码长度至少 6 位")
+        return v
+
+
+@router.post("/forgot-password")
+async def forgot_password(body: ForgotPasswordRequest) -> dict:
+    """Generate a password-reset token. Requires username or email."""
+    if not body.username and not body.email:
+        raise HTTPException(status_code=400, detail={"error": {"message": "请输入用户名或邮箱"}})
+
+    async with get_session_sync()() as session:
+        if body.username:
+            result = await session.execute(
+                select(User).where(User.username == body.username)
+            )
+        else:
+            result = await session.execute(
+                select(User).where(User.email == body.email)
+            )
+        user = result.scalar_one_or_none()
+
+    if user is None:
+        # Don't reveal whether the user exists
+        return {"message": "如果该用户存在，重置链接已生成", "reset_token": ""}
+
+    # Generate a secure token valid for 1 hour
+    token = secrets.token_urlsafe(48)
+    expires_at = datetime.utcnow() + timedelta(hours=1)
+
+    async with get_session_sync()() as session:
+        async with session.begin():
+            # Invalidate old tokens for this user
+            await session.execute(
+                text("UPDATE password_resets SET used=1 WHERE user_id=:uid AND used=0"),
+                {"uid": user.id},
+            )
+            reset = PasswordReset(
+                user_id=user.id,
+                token=ph.hash(token),  # store hashed token
+                expires_at=expires_at,
+            )
+            session.add(reset)
+
+    # Return the raw token for self-hosted (no email server)
+    return {
+        "message": "重置令牌已生成，请在 1 小时内使用",
+        "reset_token": token,
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(body: ResetPasswordRequest) -> dict:
+    """Reset password using a reset token."""
+    # We need to iterate through unexpired, unused tokens and verify hash
+    async with get_session_sync()() as session:
+        result = await session.execute(
+            text("SELECT id, user_id, token, expires_at FROM password_resets WHERE used=0 AND expires_at > NOW()")
+        )
+        rows = result.fetchall()
+
+    matched_reset = None
+    for row in rows:
+        try:
+            if ph.verify(row.token, body.token):
+                matched_reset = {"id": row.id, "user_id": row.user_id}
+                # Check if hash needs rehashing
+                if ph.check_needs_rehash(row.token):
+                    pass  # skip rehash for reset tokens
+                break
+        except VerificationError:
+            continue
+
+    if matched_reset is None:
+        raise HTTPException(status_code=400, detail={"error": {"message": "无效或已过期的重置令牌"}})
+
+    # Update password
+    pw_hash = ph.hash(body.password)
+    async with get_session_sync()() as session:
+        async with session.begin():
+            await session.execute(
+                text("UPDATE users SET password_hash=:pw WHERE id=:uid"),
+                {"pw": pw_hash, "uid": matched_reset["user_id"]},
+            )
+            await session.execute(
+                text("UPDATE password_resets SET used=1 WHERE id=:id"),
+                {"id": matched_reset["id"]},
+            )
+
+    return {"message": "密码重置成功"}
 
 
 @router.post("/logout")

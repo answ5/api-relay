@@ -3,6 +3,8 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { me } from './api';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Admin pages
 import AdminLayout from './pages/Layout';
@@ -82,6 +84,8 @@ export default function App() {
         {/* Public routes */}
         <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={setAuth} />} />
         <Route path="/register" element={auth ? <Navigate to="/" replace /> : <Register />} />
+        <Route path="/forgot-password" element={auth ? <Navigate to="/" replace /> : <ForgotPassword />} />
+        <Route path="/reset-password" element={auth ? <Navigate to="/" replace /> : <ResetPassword />} />
 
         {/* Admin layout + routes */}
         <Route path="/" element={

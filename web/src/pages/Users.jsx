@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { listUsers, createUser, updateUser, adjustBalance } from '../api';
+import { listUsers, createUser, updateUser, adjustBalance, adminResetUserPassword } from '../api';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -50,6 +50,12 @@ export default function Users() {
     load();
   };
 
+  const handlePasswordReset = async (id, data) => {
+    await adminResetUserPassword(id, data);
+    showToast('密码已重置');
+    setModal(null);
+  };
+
   return (
     <div>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
@@ -83,7 +89,8 @@ export default function Users() {
                     <td className="cell-time">{u.created_at?.slice(0, 19)}</td>
                     <td>
                       <button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'edit', data: u })}>编辑</button>{' '}
-                      <button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'balance', data: u })}>余额</button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'balance', data: u })}>余额</button>{' '}
+                      <button className="btn btn-ghost btn-sm" onClick={() => setModal({ type: 'password', data: u })}>密码</button>
                     </td>
                   </tr>
                 ))}
@@ -107,6 +114,7 @@ export default function Users() {
             {modal.type === 'create' && <UserCreateForm onSave={handleCreate} onClose={() => setModal(null)} />}
             {modal.type === 'edit' && <UserEditForm user={modal.data} onSave={(d) => handleUpdate(modal.data.id, d)} onClose={() => setModal(null)} />}
             {modal.type === 'balance' && <BalanceForm user={modal.data} onSave={(d) => handleBalance(modal.data.id, d)} onClose={() => setModal(null)} />}
+            {modal.type === 'password' && <PasswordForm user={modal.data} onSave={(d) => handlePasswordReset(modal.data.id, d)} onClose={() => setModal(null)} />}
           </div>
         </div>
       )}
@@ -217,6 +225,47 @@ function BalanceForm({ user, onSave, onClose }) {
           </div>
         </form>
       </div>
+    </>
+  );
+}
+
+function PasswordForm({ user, onSave, onClose }) {
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (password.length < 6) { setError('密码长度至少 6 位'); return; }
+    if (password !== confirm) { setError('两次密码输入不一致'); return; }
+    setLoading(true);
+    try { await onSave({ password }); } catch (e) {
+      setError(e.response?.data?.detail?.error?.message || '重置失败');
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <>
+      <div className="modal-header"><span>重置密码 - {user.username}</span><button onClick={onClose}>&times;</button></div>
+      <form onSubmit={handleSubmit}>
+        <div className="modal-body">
+          {error && <p style={{ color: '#cf1322', fontSize: '.85rem', marginBottom: 12 }}>{error}</p>}
+          <div className="form-group">
+            <label>新密码</label>
+            <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="至少 6 位" autoFocus />
+          </div>
+          <div className="form-group">
+            <label>确认密码</label>
+            <input type="text" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="再次输入" />
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>取消</button>
+          <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? '重置中...' : '重置密码'}</button>
+        </div>
+      </form>
     </>
   );
 }

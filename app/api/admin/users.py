@@ -43,6 +43,10 @@ class BalanceAdjustRequest(BaseModel):
     note: str = ""
 
 
+class AdminPasswordResetRequest(BaseModel):
+    password: str
+
+
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -326,3 +330,26 @@ async def adjust_balance(
             "note": body.note,
         }
     }
+
+
+@router.put("/{user_id}/password")
+async def admin_reset_password(
+    user_id: int,
+    body: AdminPasswordResetRequest,
+    _: Any = Depends(require_admin),
+) -> dict:
+    """Admin: reset a user's password directly."""
+    pw_hash = ph.hash(body.password)
+    async with get_session_sync()() as session:
+        async with session.begin():
+            result = await session.execute(
+                text("SELECT id FROM users WHERE id=:uid"),
+                {"uid": user_id},
+            )
+            if not result.fetchone():
+                raise HTTPException(status_code=404, detail={"error": {"message": "用户不存在"}})
+            await session.execute(
+                text("UPDATE users SET password_hash=:pw WHERE id=:uid"),
+                {"pw": pw_hash, "uid": user_id},
+            )
+    return {"message": "密码已重置"}
